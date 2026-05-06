@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Database & Logs (运行时生成)
+*.db
+*.sqlite
+*.sqlite3
+*.jsonl
+*.log
+
+# Reports (运行时生成)
+reports/*.txt
+reports/*.pdf
+
+# Environment
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads
+uploads/*
+!uploads/.gitkeep
+
+# Audit logs
+data/audit_logs/*
+!data/audit_logs/.gitkeep

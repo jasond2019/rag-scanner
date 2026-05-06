@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rag-scanner"
+version = "1.0.0"
+description = "RAG System Security Scanner - Free security scanning tool for AI applications"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "RAGShield Team", email = "support@raguard.com"}
+]
+keywords = ["rag", "security", "scanner", "ai", "llm"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "Flask==3.0.0",
+    "Flask-SocketIO==5.3.6",
+    "Flask-CORS==4.0.0",
+    "Flask-Login==0.6.3",
+    "Flask-SQLAlchemy==3.1.1",
+    "SQLAlchemy==2.0.23",
+    "redis==5.0.1",
+    "WeasyPrint==60.2",
+    "requests==2.31.0",
+    "aiohttp==3.9.1",
+    "cryptography==41.0.7",
+    "python-dotenv==1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==7.4.3",
+    "pytest-cov==4.1.0",
+    "gunicorn==21.2.0",
+]
+
+[project.urls]
+Homepage = "https://raguard.com"
+Repository = "https://github.com/ragshield/rag-scanner"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*", "scanner*"]

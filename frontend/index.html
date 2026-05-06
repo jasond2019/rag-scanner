@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Scanner - RAG System Security Detection</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>RAG Scanner</h1>
+        <p class="subtitle">Paste curl command or enter URL for one-click RAG system security detection</p>
+
+        <!-- Input Section -->
+        <div class="input-section">
+            <label class="input-label">Target URL</label>
+            <p class="input-hint">Supports curl command (recommended) or URL</p>
+            <textarea id="inputBox"
+                      placeholder="Example 1 (curl): curl 'https://api.example.com/chat' -H 'Authorization: Bearer xxx' -d '{"query":"hello"}'
+
+Example 2 (URL): https://api.example.com/chat"></textarea>
+            <p class="error-msg" id="errorMsg"></p>
+        </div>
+
+        <!-- Preview Section -->
+        <div class="preview-section" id="previewSection">
+            <div class="preview-title">
+                <span class="icon">&#128269;</span>
+                Parsed Result
+                <span class="input-type-badge" id="inputTypeBadge"></span>
+            </div>
+
+            <div class="preview-row">
+                <span class="preview-label">URL:</span>
+                <span class="preview-value url" id="parsedUrl">-</span>
+            </div>
+
+            <div class="preview-row">
+                <span class="preview-label">Method:</span>
+                <span class="preview-value" id="parsedMethod">POST</span>
+            </div>
+
+            <div class="preview-row">
+                <span class="preview-label">Param:</span>
+                <select id="paramSelect">
+                    <option value="query">query</option>
+                    <option value="prompt">prompt</option>
+                    <option value="message">message</option>
+                    <option value="input">input</option>
+                    <option value="question">question</option>
+                    <option value="custom">Custom...</option>
+                </select>
+                <input type="text" id="customParam" placeholder="Enter param name">
+            </div>
+
+            <div class="preview-row">
+                <span class="preview-label">Auth:</span>
+                <span class="preview-value" id="parsedAuth">-</span>
+                <input type="text" id="authToken" placeholder="Enter Bearer Token...">
+                <span class="auth-hint" id="authHint"></span>
+            </div>
+        </div>
+
+        <!-- Scan Button -->
+        <button class="btn" id="submitBtn" onclick="startScan()">Start Security Scan</button>
+
+        <!-- Progress Section -->
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <p class="progress-text" id="progressText">Initializing...</p>
+        </div>
+
+        <!-- Result Section -->
+        <div class="result-container" id="resultContainer">
+            <div class="score-card">
+                <div class="score-number" id="scoreNumber">--</div>
+                <div class="score-level" id="scoreLevel">--</div>
+            </div>
+
+            <div class="vulnerabilities" id="vulnerabilities"></div>
+
+            <a href="#" class="download-btn" id="downloadBtn" target="_blank">Download PDF Report</a>
+        </div>
+
+        <!-- Features -->
+        <div class="features">
+            <h3>10 Security Checks</h3>
+            <div class="feature-grid">
+                <div class="feature-item"><div class="feature-icon">&#128140;</div><div class="feature-name">Prompt Injection</div></div>
+                <div class="feature-item"><div class="feature-icon">&#128274;</div><div class="feature-name">Data Leakage</div></div>
+                <div class="feature-item"><div class="feature-icon">&#128196;</div><div class="feature-name">Vector Injection</div></div>
+                <div class="feature-item"><div class="feature-icon">&#127919;</div><div class="feature-name">Retrieval Pollution</div></div>
+                <div class="feature-item"><div class="feature-icon">&#128273;</div><div class="feature-name">Auth Bypass</div></div>
+                <div class="feature-item"><div class="feature-icon">&#128202;</div><div class="feature-name">API Abuse</div></div>
+                <div class="feature-item"><div class="feature-icon">&#128221;</div><div class="feature-name">Log Leakage</div></div>
+                <div class="feature-item"><div class="feature-icon">&#129302;</div><div class="feature-name">Model Jailbreak</div></div>
+                <div class="feature-item"><div class="feature-icon">&#128230;</div><div class="feature-name">Dependency Vuln</div></div>
+                <div class="feature-item"><div class="feature-icon">&#9881;</div><div class="feature-name">Config Error</div></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

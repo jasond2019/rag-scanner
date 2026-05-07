@@ -1,32 +1,23 @@
 """
 API 入口 - 获取扫描结果
-Vercel 文件路径: api/scan/[task_id]/result.py → URL: /api/scan/{task_id}/result
 """
-
-import sys
-import os
-
-# 添加项目根目录到 Python 路径
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
 
-@app.route('/', methods=['GET', 'OPTIONS'])
-def get_scan_result():
+@app.route('/api/scan/<task_id>/result', methods=['GET', 'OPTIONS'])
+def get_scan_result(task_id):
     """获取扫描结果"""
     if request.method == 'OPTIONS':
         return jsonify({'code': 0}), 200
 
-    # 从查询参数获取 task_id
-    task_id = request.args.get('task_id') or request.path.split('/')[-2]
-
     if not task_id:
         return jsonify({'code': 1, 'message': 'task_id required'}), 400
 
-    # 模拟结果响应（简化版）
+    # 模拟扫描结果（简化版）
+    # 实际部署时可以连接 Vercel Postgres 获取真实结果
     return jsonify({
         'code': 0,
         'message': 'success',
@@ -36,7 +27,15 @@ def get_scan_result():
             'is_final': True,
             'score': 85,
             'level': 'medium',
-            'vulnerabilities': [],
+            'vulnerabilities': [
+                {
+                    'id': 'vuln_001',
+                    'name': 'Prompt Injection Risk',
+                    'severity': 'medium',
+                    'description': 'API may be vulnerable to prompt injection attacks',
+                    'suggestion': 'Add input validation and sanitization'
+                }
+            ],
             'score_breakdown': {
                 'base_score': 100,
                 'total_deduction': 15,

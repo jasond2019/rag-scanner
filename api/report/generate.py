@@ -1,20 +1,13 @@
 """
 API 入口 - 生成 PDF 报告
-Vercel 文件路径: api/report/generate.py → URL: /api/report/generate
 """
-
-import sys
-import os
-
-# 添加项目根目录到 Python 路径
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
 
-@app.route('/', methods=['GET', 'OPTIONS'])
+@app.route('/api/report/generate', methods=['GET', 'OPTIONS'])
 def generate_report():
     """生成 PDF 报告"""
     if request.method == 'OPTIONS':
@@ -22,10 +15,11 @@ def generate_report():
 
     task_id = request.args.get('task_id')
     if not task_id:
-        return jsonify({'code': 1, 'message': 'task_id required'}), 400
+        return jsonify({'code': 1, 'message': 'task_id parameter required'}), 400
 
-    # 简化版报告 URL
-    report_url = f'https://blob.vercel-storage.com/reports/{task_id}.pdf'
+    # 模拟报告 URL（简化版）
+    # 实际部署时可以使用 Vercel Blob 存储真实 PDF
+    report_url = f'https://rag-scanner.vercel.app/reports/{task_id}.pdf'
 
     return jsonify({
         'code': 0,
@@ -33,7 +27,8 @@ def generate_report():
         'data': {
             'task_id': task_id,
             'report_url': report_url,
-            'download_url': report_url
+            'download_url': report_url,
+            'note': 'PDF generation requires Vercel Blob storage setup'
         }
     })
 

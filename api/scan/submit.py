@@ -3,11 +3,13 @@ API 入口 - 提交扫描任务
 """
 
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import uuid
 import re
 from datetime import datetime
 
 app = Flask(__name__)
+CORS(app)  # 启用 CORS
 
 
 @app.route('/api/scan/submit', methods=['POST', 'GET', 'OPTIONS'])

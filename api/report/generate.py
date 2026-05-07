@@ -3,8 +3,10 @@ API 入口 - 生成 PDF 报告
 """
 
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)  # 启用 CORS
 
 
 @app.route('/api/report/generate', methods=['GET', 'OPTIONS'])

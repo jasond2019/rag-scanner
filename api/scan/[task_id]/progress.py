@@ -2,9 +2,11 @@
 API 入口 - 获取扫描进度
 """
 
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)  # 启用 CORS
 
 
 @app.route('/api/scan/<task_id>/progress', methods=['GET', 'OPTIONS'])

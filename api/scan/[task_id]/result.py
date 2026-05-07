@@ -2,17 +2,16 @@
 API 入口 - 获取扫描结果
 """
 
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)  # 启用 CORS
 
 
 @app.route('/api/scan/<task_id>/result', methods=['GET', 'OPTIONS'])
 def get_scan_result(task_id):
     """获取扫描结果"""
-    if request.method == 'OPTIONS':
-        return jsonify({'code': 0}), 200
-
     if not task_id:
         return jsonify({'code': 1, 'message': 'task_id required'}), 400
 

@@ -3,9 +3,11 @@ API 入口 - 解析 curl 命令
 """
 
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import re
 
 app = Flask(__name__)
+CORS(app)  # 启用 CORS
 
 
 def parse_curl_simple(curl_cmd):

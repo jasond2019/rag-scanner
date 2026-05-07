@@ -3,8 +3,10 @@
 """
 
 from flask import Flask, jsonify
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)  # 启用 CORS
 
 
 @app.route('/api/hello', methods=['GET'])

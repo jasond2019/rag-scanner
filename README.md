@@ -4,7 +4,7 @@
 
 A lightweight RAG system security scanner with one-click detection of 10 security vulnerabilities.
 
-**Online Access**: https://jasond2019.github.io/rag-scanner
+**Online Access**: https://jasond2019.github.io/rag-scanner/
 
 ## Features
 

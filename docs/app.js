@@ -3,9 +3,8 @@
  * 使用 HTTP Polling 替代 WebSocket
  */
 
-// API 基础 URL - 部署到 Vercel 后修改
-const API_URL = window.RAG_SCANNER_API_URL || 'https://rag-scanner-api.vercel.app';
-// 本地开发时使用: 'http://localhost:3000'
+// API 基础 URL - Vercel 后端地址
+const API_URL = 'https://rag-scanner.vercel.app';
 
 let currentTaskId = null;
 let parsedData = null;

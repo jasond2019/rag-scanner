@@ -214,7 +214,7 @@ async function startScan() {
 function startPolling(taskId) {
     pollTimer = setInterval(async () => {
         try {
-            const res = await fetch(`${API_URL}/api/scan/${taskId}/progress`);
+            const res = await fetch(`${API_URL}/api/scan/progress?task_id=${taskId}`);
             const data = await res.json();
 
             if (data.code === 0) {
@@ -246,7 +246,7 @@ function updateProgress(data) {
 // 加载结果
 async function loadResult(taskId) {
     try {
-        const response = await fetch(`${API_URL}/api/scan/${taskId}/result`);
+        const response = await fetch(`${API_URL}/api/scan/result?task_id=${taskId}`);
         const data = await response.json();
 
         if (data.code === 0) {

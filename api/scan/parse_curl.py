@@ -1,79 +1,74 @@
 """
 API 入口 - 解析 curl 命令
-Vercel 文件路径: api/scan/parse_curl.py → URL: /api/scan/parse_curl
+简化版 - 先测试基本功能
 """
 
 from flask import Flask, request, jsonify
-import asyncio
-import sys
-import os
-
-# 添加项目根目录到 Python 路径
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from scanner.format_detector import APIFormatDetector
+import re
 
 app = Flask(__name__)
 
 
-@app.route('/', methods=['POST', 'OPTIONS'])
+def parse_curl_simple(curl_cmd):
+    """简单解析 curl 命令"""
+    result = {
+        'url': '',
+        'method': 'POST',
+        'param_name': 'query',
+        'headers': {},
+        'auth_header': None
+    }
+
+    # 提取 URL
+    url_match = re.search(r"'([^']+)'", curl_cmd)
+    if url_match:
+        result['url'] = url_match.group(1)
+
+    # 提取 Authorization
+    auth_match = re.search(r"-H\s+'Authorization:\s*([^']+)'", curl_cmd)
+    if auth_match:
+        auth_value = auth_match.group(1)
+        result['headers']['Authorization'] = auth_value
+        if auth_value.startswith('Bearer '):
+            token_preview = auth_value[7:27] + '...' if len(auth_value) > 27 else auth_value[7:]
+            result['auth_header'] = f"Bearer {token_preview}"
+
+    return result
+
+
+@app.route('/', methods=['POST', 'GET', 'OPTIONS'])
 def parse_curl():
     """解析 curl 命令"""
     if request.method == 'OPTIONS':
         return jsonify({'code': 0}), 200
 
-    data = request.get_json()
-    curl_cmd = data.get('curl', '')
+    if request.method == 'GET':
+        return jsonify({
+            'code': 0,
+            'message': 'parse_curl API is running',
+            'usage': 'POST with {"curl": "curl command"}'
+        })
 
+    data = request.get_json()
+    if not data:
+        return jsonify({'code': 1, 'message': 'No JSON data provided'}), 400
+
+    curl_cmd = data.get('curl', '')
     if not curl_cmd:
         return jsonify({'code': 1, 'message': 'curl command cannot be empty'}), 400
 
     if not curl_cmd.strip().lower().startswith('curl '):
-        return jsonify({'code': 1, 'message': 'Invalid curl command'}), 400
+        return jsonify({'code': 1, 'message': 'Invalid curl command, must start with "curl "'}), 400
 
     try:
-        format_detector = APIFormatDetector()
-
-        def parse_sync():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                return loop.run_until_complete(format_detector._detect_from_curl(curl_cmd))
-            finally:
-                loop.close()
-
-        parsed = parse_sync()
-
-        # 提取认证信息
-        auth_header = None
-        headers = parsed.get('headers', {})
-        for key in ['Authorization', 'X-API-Key', 'Api-Key', 'Bearer', 'Token']:
-            if key in headers:
-                auth_header = f"{key}: {headers[key][:20]}..." if len(headers[key]) > 20 else f"{key}: {headers[key]}"
-                break
-
-        if 'Authorization' in headers:
-            auth_value = headers['Authorization']
-            if auth_value.startswith('Bearer '):
-                token_preview = auth_value[7:27] + '...' if len(auth_value) > 27 else auth_value[7:]
-                auth_header = f"Bearer {token_preview}"
-
+        parsed = parse_curl_simple(curl_cmd)
         return jsonify({
             'code': 0,
             'message': 'success',
-            'data': {
-                'url': parsed.get('url', ''),
-                'method': parsed.get('method', 'POST'),
-                'param_name': parsed.get('param_name', 'query'),
-                'auth_header': auth_header,
-                'has_body': parsed.get('body') is not None,
-                'headers': headers,
-                'extra_params': parsed.get('extra_params', {})
-            }
+            'data': parsed
         })
-
     except Exception as e:
-        return jsonify({'code': 1, 'message': f'curl parse failed: {str(e)}'}), 400
+        return jsonify({'code': 1, 'message': f'Parse failed: {str(e)}'}), 400
 
 
 # Vercel 入口

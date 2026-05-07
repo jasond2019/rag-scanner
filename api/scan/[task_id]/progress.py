@@ -2,11 +2,11 @@
 API 入口 - 获取扫描进度
 """
 
-from flask import Flask, jsonify
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)  # 启用 CORS
+CORS(app)
 
 
 @app.route('/api/scan/<task_id>/progress', methods=['GET', 'OPTIONS'])
@@ -18,8 +18,7 @@ def get_scan_progress(task_id):
     if not task_id:
         return jsonify({'code': 1, 'message': 'task_id required'}), 400
 
-    # 模拟进度响应（简化版）
-    # 实际部署时可以连接 Vercel KV 获取真实进度
+    # 模拟进度响应
     return jsonify({
         'code': 0,
         'message': 'success',

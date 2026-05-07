@@ -7,11 +7,19 @@ from flask import Flask, jsonify
 app = Flask(__name__)
 
 
-@app.route('/', methods=['GET'])
+@app.route('/api/hello', methods=['GET'])
 def hello():
     return jsonify({
         'message': 'Hello from Vercel Python!',
         'status': 'ok'
+    })
+
+
+@app.route('/', methods=['GET'])
+def root():
+    return jsonify({
+        'message': 'Root endpoint',
+        'available': ['/api/hello']
     })
 
 

@@ -1,6 +1,5 @@
 """
 API 入口 - 解析 curl 命令
-简化版 - 先测试基本功能
 """
 
 from flask import Flask, request, jsonify
@@ -36,7 +35,7 @@ def parse_curl_simple(curl_cmd):
     return result
 
 
-@app.route('/', methods=['POST', 'GET', 'OPTIONS'])
+@app.route('/api/scan/parse_curl', methods=['POST', 'GET', 'OPTIONS'])
 def parse_curl():
     """解析 curl 命令"""
     if request.method == 'OPTIONS':

@@ -1,16 +1,16 @@
 """
 API 入口 - 提交扫描任务
-简化版 - 先测试基本功能
 """
 
 from flask import Flask, request, jsonify
 import uuid
+import re
 from datetime import datetime
 
 app = Flask(__name__)
 
 
-@app.route('/', methods=['POST', 'GET', 'OPTIONS'])
+@app.route('/api/scan/submit', methods=['POST', 'GET', 'OPTIONS'])
 def submit_scan():
     """提交扫描任务"""
     if request.method == 'OPTIONS':
@@ -41,7 +41,6 @@ def submit_scan():
     # 简单提取 URL
     url = target_value
     if input_type == 'curl':
-        import re
         url_match = re.search(r"'([^']+)'", target_value)
         if url_match:
             url = url_match.group(1)

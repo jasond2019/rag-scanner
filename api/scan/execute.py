@@ -88,8 +88,8 @@ def execute_scan():
                 task.level = result.level
 
             # 保存漏洞
-            for vuln in result.vulnerabilities:
-                vuln_id = f"{task_id}_{vuln.get('rule_id', uuid.uuid4().hex[:8])}"
+            for i, vuln in enumerate(result.vulnerabilities):
+                vuln_id = f"{task_id}_{vuln.get('rule_id', 'unknown')}_{i}_{uuid.uuid4().hex[:4]}"
                 vuln_record = Vulnerability(
                     id=vuln_id,
                     task_id=task_id,

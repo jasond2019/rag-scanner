@@ -1,13 +1,20 @@
 """
 Simplified Scan Engine for Vercel Serverless
-Executes quick security checks without async/threading
+使用 ragshield-rules 规则库
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, List
 from dataclasses import dataclass, field
 from datetime import datetime
 
-from .detectors import PromptInjectionDetector, DataLeakDetector, AuthBypassDetector
+from .detectors import (
+    PromptInjectionDetector,
+    JailbreakDetector,
+    PrivacyDetector,
+    SensitiveDetector,
+    AuthBypassDetector,
+    DataLeakDetector,
+)
 from .scorer import VulnerabilityScorer
 
 
@@ -24,14 +31,18 @@ class ScanResult:
 
 
 class ScanEngine:
-    """简化版扫描引擎"""
+    """扫描引擎"""
 
     def __init__(self):
         self.scorer = VulnerabilityScorer()
+        # 6 个检测器
         self.detectors = {
-            "prompt_injection": PromptInjectionDetector(),
-            "data_leak": DataLeakDetector(),
+            "prompt_injection": PromptInjectionDetector(max_payloads=30),
+            "jailbreak": JailbreakDetector(max_payloads=20),
+            "privacy": PrivacyDetector(),
+            "sensitive": SensitiveDetector(),
             "auth_bypass": AuthBypassDetector(),
+            "data_leak": DataLeakDetector(),
         }
 
     def scan(
@@ -41,18 +52,7 @@ class ScanEngine:
         headers: Dict,
         param_name: str = "query",
     ) -> ScanResult:
-        """
-        执行快速扫描
-
-        Args:
-            task_id: 任务 ID
-            target_url: 目标 URL
-            headers: 请求头（含认证）
-            param_name: 参数名
-
-        Returns:
-            ScanResult: 扫描结果
-        """
+        """执行扫描"""
         all_vulnerabilities = []
 
         # 设置请求格式

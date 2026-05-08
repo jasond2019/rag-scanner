@@ -1,0 +1,48 @@
+name: Sync Rules
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 每天 UTC 0 点执行
+  workflow_dispatch:      # 手动触发
+  push:
+    paths:
+      - 'ragshield-rules/**'  # 规则库更新时触发
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout rag-scanner
+        uses: actions/checkout@v4
+        with:
+          repository: JasonD2019/rag-scanner
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout ragshield-rules
+        uses: actions/checkout@v4
+        with:
+          repository: JasonD2019/ragshield-rules
+          path: ragshield-rules
+
+      - name: Sync rules to API
+        run: |
+          mkdir -p api/scanner/rules
+          cp -r ragshield-rules/injection api/scanner/rules/
+          cp -r ragshield-rules/jailbreak api/scanner/rules/
+          cp -r ragshield-rules/privacy api/scanner/rules/
+          cp -r ragshield-rules/sensitive api/scanner/rules/
+          cp ragshield-rules/version.json api/scanner/rules/
+
+      - name: Show stats
+        run: |
+          echo "=== Rules Stats ==="
+          find api/scanner/rules -name "*.json" -type f | wc -l
+          echo "Injection patterns:"
+          cat api/scanner/rules/injection/prompt_injection.json | jq '.metadata.total_patterns'
+
+      - name: Commit changes
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add api/scanner/rules/
+          git commit -m "sync: update rules from ragshield-rules [skip ci]" || echo "No changes to commit"
+          git push

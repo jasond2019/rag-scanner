@@ -1,6 +1,5 @@
 """
 API 入口 - 提交扫描任务
-（简化版：暂不使用数据库，直接返回任务 ID）
 """
 
 from flask import Flask, request, jsonify
@@ -31,7 +30,6 @@ def submit_scan():
         return jsonify({'code': 1, 'message': 'No JSON data provided'}), 400
 
     target_value = data.get('target_value') or data.get('url') or data.get('curl') or ''
-    target_type = data.get('target_type', 'url')
     param_name = data.get('param_name', 'query')
     step = data.get('step', 1)
 
@@ -50,6 +48,26 @@ def submit_scan():
         url_match = re.search(r"'([^']+)'", target_value)
         if url_match:
             url = url_match.group(1)
+
+    # 保存到数据库
+    try:
+        from lib.db import get_session, init_db, ScanTask
+        init_db()
+        db = get_session()
+        if db:
+            task = ScanTask(
+                id=task_id,
+                target_type=input_type,
+                target_value=target_value,
+                status='queued',
+                progress=0,
+                current_step='waiting'
+            )
+            db.add(task)
+            db.commit()
+            db.close()
+    except Exception as e:
+        print(f"DB save error: {e}")
 
     return jsonify({
         'code': 0,

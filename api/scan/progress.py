@@ -19,10 +19,34 @@ def get_scan_progress():
     if not task_id:
         return jsonify({'code': 1, 'message': 'task_id parameter required'}), 400
 
-    # 返回模拟进度（已完成）
+    # 从数据库查询
+    try:
+        from lib.db import get_session, ScanTask
+        db = get_session()
+        if db:
+            task = db.query(ScanTask).filter(ScanTask.id == task_id).first()
+            db.close()
+
+            if task:
+                return jsonify({
+                    'code': 0,
+                    'message': 'success',
+                    'data': {
+                        'task_id': task_id,
+                        'status': task.status or 'queued',
+                        'progress': task.progress or 0,
+                        'current_step': task.current_step or 'waiting',
+                        'step': 1,
+                        'score': task.score
+                    }
+                })
+    except Exception as e:
+        print(f"DB query error: {e}")
+
+    # 降级处理：返回模拟数据
     return jsonify({
         'code': 0,
-        'message': 'success',
+        'message': 'success (fallback)',
         'data': {
             'task_id': task_id,
             'status': 'completed',

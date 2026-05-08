@@ -1,5 +1,6 @@
 """
 Vercel Postgres 数据库连接
+使用 pg8000 纯 Python 驱动（Vercel Serverless 兼容）
 """
 
 import os
@@ -11,13 +12,24 @@ from datetime import datetime
 # Vercel Postgres 环境变量
 POSTGRES_URL = os.environ.get('POSTGRES_URL')
 
-if POSTGRES_URL:
-    engine = create_engine(POSTGRES_URL, pool_pre_ping=True)
-else:
-    # 本地开发 fallback
-    engine = None
+engine = None
+SessionLocal = None
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine) if engine else None
+if POSTGRES_URL:
+    try:
+        # pg8000 驱动，替换 postgresql:// 为 postgresql+pg8000://
+        db_url = POSTGRES_URL
+        if db_url.startswith('postgresql://'):
+            db_url = db_url.replace('postgresql://', 'postgresql+pg8000://', 1)
+
+        engine = create_engine(db_url, pool_pre_ping=True)
+        SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+        print(f"Database engine created successfully")
+    except Exception as e:
+        print(f"Database engine creation failed: {e}")
+else:
+    print("POSTGRES_URL not set, using fallback mode")
+
 Base = declarative_base()
 
 
@@ -51,11 +63,18 @@ class Vulnerability(Base):
 def init_db():
     """初始化数据库表"""
     if engine:
-        Base.metadata.create_all(bind=engine)
+        try:
+            Base.metadata.create_all(bind=engine)
+            print("Database tables created/verified")
+        except Exception as e:
+            print(f"init_db error: {e}")
 
 
 def get_session():
     """获取数据库会话"""
     if SessionLocal:
-        return SessionLocal()
+        try:
+            return SessionLocal()
+        except Exception as e:
+            print(f"get_session error: {e}")
     return None

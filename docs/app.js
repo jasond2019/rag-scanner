@@ -86,11 +86,14 @@ async function parseInput(input) {
                     authTokenInput.style.display = 'none';
                     authHint.textContent = '(parsed from curl)';
                     authHint.className = 'auth-hint auth-from-curl';
+                    // 保存完整 headers
+                    parsedData.headers = data.data.headers;
                 } else {
                     parsedAuthSpan.textContent = '(none)';
                     authTokenInput.style.display = 'inline-block';
                     authHint.textContent = '(required)';
                     authHint.className = 'auth-hint auth-needed';
+                    parsedData.headers = {};
                 }
 
                 previewSection.style.display = 'block';
@@ -116,6 +119,7 @@ async function parseInput(input) {
             inputType: 'url',
             rawInput: input,
             param_name: 'query',
+            headers: {},
             auth_header: null
         };
 
@@ -159,10 +163,13 @@ async function startScan() {
         }
     }
 
-    // 获取认证 token (如果是 URL 模式)
-    let authToken = null;
+    // 获取认证 token
+    let headers = parsedData.headers || {};
     if (parsedData.inputType === 'url') {
-        authToken = document.getElementById('authToken').value.trim();
+        const authToken = document.getElementById('authToken').value.trim();
+        if (authToken) {
+            headers['Authorization'] = authToken.startsWith('Bearer ') ? authToken : `Bearer ${authToken}`;
+        }
     }
 
     // 重置 UI
@@ -173,36 +180,55 @@ async function startScan() {
     document.getElementById('progressText').textContent = 'Submitting task...';
 
     try {
-        const requestBody = {
-            target_value: parsedData.rawInput,
-            target_type: parsedData.inputType,
-            param_name: paramName,
-            step: 1
-        };
-
-        // URL 模式添加认证
-        if (parsedData.inputType === 'url' && authToken) {
-            requestBody.auth_token = authToken;
-        }
-
-        const response = await fetch(`${API_URL}/api/scan/submit`, {
+        // Step 1: 创建任务
+        const submitResponse = await fetch(`${API_URL}/api/scan/submit`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestBody)
+            body: JSON.stringify({
+                target_value: parsedData.rawInput,
+                target_type: parsedData.inputType,
+                param_name: paramName
+            })
         });
 
-        const data = await response.json();
+        const submitData = await submitResponse.json();
 
-        if (data.code === 0) {
-            currentTaskId = data.data.task_id;
-            document.getElementById('progressText').textContent = 'Scan in progress...';
-            // 开始轮询进度
-            startPolling(currentTaskId);
-        } else {
-            alert('Submit failed: ' + data.message);
+        if (submitData.code !== 0) {
+            alert('Submit failed: ' + submitData.message);
             document.getElementById('submitBtn').disabled = false;
             document.getElementById('progressContainer').style.display = 'none';
+            return;
         }
+
+        currentTaskId = submitData.data.task_id;
+        document.getElementById('progressFill').style.width = '30%';
+        document.getElementById('progressText').textContent = 'Executing security scan...';
+
+        // Step 2: 执行扫描
+        const executeResponse = await fetch(`${API_URL}/api/scan/execute`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                task_id: currentTaskId,
+                url: parsedData.url,
+                headers: headers,
+                param_name: paramName
+            })
+        });
+
+        const executeData = await executeResponse.json();
+
+        document.getElementById('progressFill').style.width = '100%';
+        document.getElementById('progressText').textContent = 'Scan completed!';
+
+        if (executeData.code === 0) {
+            // 直接显示结果
+            displayResult(executeData.data);
+        } else {
+            // 执行失败，轮询进度
+            startPolling(currentTaskId);
+        }
+
     } catch (error) {
         alert('Network error: ' + error.message);
         document.getElementById('submitBtn').disabled = false;
@@ -210,7 +236,7 @@ async function startScan() {
     }
 }
 
-// HTTP Polling 进度
+// HTTP Polling 进度（备用）
 function startPolling(taskId) {
     pollTimer = setInterval(async () => {
         try {
@@ -233,7 +259,7 @@ function startPolling(taskId) {
         } catch (e) {
             console.error('Polling error:', e);
         }
-    }, 2000); // 2秒轮询
+    }, 2000);
 }
 
 // 更新进度
@@ -243,7 +269,7 @@ function updateProgress(data) {
         'Checking: ' + data.current_step + ' (' + data.progress + '%)';
 }
 
-// 加载结果
+// 加载结果（备用）
 async function loadResult(taskId) {
     try {
         const response = await fetch(`${API_URL}/api/scan/result?task_id=${taskId}`);
@@ -261,6 +287,7 @@ async function loadResult(taskId) {
 function displayResult(result) {
     document.getElementById('resultContainer').style.display = 'block';
     document.getElementById('progressContainer').style.display = 'none';
+    document.getElementById('submitBtn').disabled = false;
 
     const scoreEl = document.getElementById('scoreNumber');
     const levelEl = document.getElementById('scoreLevel');

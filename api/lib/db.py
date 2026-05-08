@@ -66,10 +66,13 @@ class Vulnerability(Base):
 
     id = Column(String(64), primary_key=True)
     task_id = Column(String(64), nullable=False)
+    rule_id = Column(String(32), nullable=True)
     name = Column(String(128), nullable=False)
     severity = Column(String(32), nullable=False)
+    score_deduction = Column(Integer, default=0)
     description = Column(Text, nullable=True)
     suggestion = Column(Text, nullable=True)
+    evidence = Column(Text, nullable=True)
 
 
 def init_db():

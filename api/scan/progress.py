@@ -4,9 +4,15 @@ API 入口 - 获取扫描进度（查询参数方式）
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+import sys
+import os
 
 app = Flask(__name__)
 CORS(app)
+
+# 添加 api 目录到 Python 路径
+api_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, api_dir)
 
 
 @app.route('/api/scan/progress', methods=['GET', 'OPTIONS'])
@@ -22,6 +28,7 @@ def get_scan_progress():
     # 从数据库查询
     try:
         from lib.db import get_session, ScanTask
+
         db = get_session()
         if db:
             task = db.query(ScanTask).filter(ScanTask.id == task_id).first()

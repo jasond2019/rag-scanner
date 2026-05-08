@@ -6,7 +6,13 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import uuid
 import re
+import sys
+import os
 from datetime import datetime
+
+# 添加 api 目录到 Python 路径
+api_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, api_dir)
 
 app = Flask(__name__)
 CORS(app)
@@ -50,6 +56,7 @@ def submit_scan():
             url = url_match.group(1)
 
     # 保存到数据库
+    db_error = None
     try:
         from lib.db import get_session, init_db, ScanTask
         init_db()
@@ -66,7 +73,11 @@ def submit_scan():
             db.add(task)
             db.commit()
             db.close()
+            print(f"Task saved to DB: {task_id}")
+        else:
+            db_error = "No database session"
     except Exception as e:
+        db_error = str(e)
         print(f"DB save error: {e}")
 
     return jsonify({
@@ -77,7 +88,9 @@ def submit_scan():
             'status': 'queued',
             'url': url,
             'input_type': input_type,
-            'param_name': param_name
+            'param_name': param_name,
+            'db_saved': db_error is None,
+            'db_error': db_error
         }
     })
 

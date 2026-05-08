@@ -1,9 +1,11 @@
 """
-API 入口 - 生成 JSON 报告
+Report Download API
+GET /api/report/download - 下载扫描报告（JSON文件）
 """
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
+import json
 import sys
 import os
 from datetime import datetime
@@ -18,34 +20,33 @@ app = Flask(__name__)
 CORS(app)
 
 
-@app.route('/api/report/generate', methods=['GET', 'POST', 'OPTIONS'])
-def generate_report():
-    """生成扫描报告（JSON格式）"""
-    if request.method == 'OPTIONS':
-        return jsonify({'code': 0}), 200
-
+@app.route('/api/report/download', methods=['GET', 'POST'])
+def download_report():
+    """下载扫描报告（JSON文件）"""
     db = get_session()
     if not db:
         return jsonify({
-            'code': 1,
-            'message': 'Database not available',
+            'error': 'Database not available',
             'details': db_error
         }), 503
 
     try:
         # 获取任务ID参数
         task_id = request.args.get('task_id', default=None, type=str)
-        if not task_id and request.is_json:
-            data = request.get_json()
-            task_id = data.get('task_id')
 
         if not task_id:
-            return jsonify({'code': 1, 'message': 'task_id parameter required'}), 400
+            return jsonify({
+                'success': False,
+                'error': 'task_id parameter is required'
+            }), 400
 
         # 查询任务
         task = db.query(ScanTask).filter_by(id=task_id).first()
         if not task:
-            return jsonify({'code': 1, 'message': 'Task not found'}), 404
+            return jsonify({
+                'success': False,
+                'error': 'Task not found'
+            }), 404
 
         # 查询漏洞
         vulnerabilities = db.query(Vulnerability).filter_by(
@@ -87,54 +88,27 @@ def generate_report():
                 }
                 for v in vulnerabilities
             ],
-            'recommendations': _generate_recommendations(vulnerabilities),
         }
 
-        return jsonify({
-            'code': 0,
-            'message': 'success',
-            'data': report
-        })
+        # 生成 JSON 文件响应
+        json_content = json.dumps(report, indent=2, ensure_ascii=False)
+        filename = f"scan-report-{task_id}.json"
+
+        return Response(
+            json_content,
+            mimetype='application/json',
+            headers={
+                'Content-Disposition': f'attachment; filename="{filename}"',
+                'Content-Type': 'application/json; charset=utf-8',
+            }
+        )
     except Exception as e:
-        return jsonify({'code': 1, 'message': str(e)}), 500
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
     finally:
         db.close()
-
-
-def _generate_recommendations(vulnerabilities):
-    """根据漏洞生成修复建议"""
-    recommendations = []
-
-    vuln_types = set()
-    for v in vulnerabilities:
-        if v.rule_id:
-            vuln_types.add(v.rule_id[:10])
-
-    if 'RAG-SEC-001' in vuln_types:
-        recommendations.append({
-            'type': 'Prompt Injection',
-            'priority': 'high',
-            'description': '检测到提示注入漏洞',
-            'actions': ['添加输入长度限制', '实施特殊字符过滤', '使用提示模板']
-        })
-
-    if 'RAG-SEC-002' in vuln_types:
-        recommendations.append({
-            'type': 'Jailbreak',
-            'priority': 'high',
-            'description': '检测到越狱攻击尝试',
-            'actions': ['强化系统提示边界', '添加角色扮演检测']
-        })
-
-    if 'RAG-SEC-003' in vuln_types or 'RAG-SEC-004' in vuln_types:
-        recommendations.append({
-            'type': 'Privacy/Sensitive',
-            'priority': 'medium',
-            'description': '检测到隐私或敏感数据泄露风险',
-            'actions': ['审查数据源权限', '添加敏感词过滤']
-        })
-
-    return recommendations
 
 
 # Vercel 入口

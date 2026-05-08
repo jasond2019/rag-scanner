@@ -57,7 +57,9 @@ class ScanTask(Base):
     current_step = Column(String(64), default='waiting')
     score = Column(Integer, nullable=True)
     level = Column(String(32), nullable=True)
+    user_id = Column(String(64), nullable=True)  # 用户ID（可选）
     created_at = Column(DateTime, default=datetime.utcnow)
+    completed_at = Column(DateTime, nullable=True)  # 完成时间
 
 
 class Vulnerability(Base):

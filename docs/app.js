@@ -322,8 +322,10 @@ function displayResult(result) {
         vulnContainer.innerHTML = '<p style="text-align: center; color: #666;">&#127881; No security vulnerabilities found!</p>';
     }
 
-    // 设置报告下载链接
-    document.getElementById('downloadBtn').href = `${API_URL}/api/report/generate?task_id=${result.task_id || currentTaskId}`;
+    // 设置报告下载链接（JSON格式）
+    const downloadBtn = document.getElementById('downloadBtn');
+    downloadBtn.href = `${API_URL}/api/report/download?task_id=${result.task_id || currentTaskId}`;
+    downloadBtn.textContent = 'Download JSON Report';
 }
 
 // 工具函数

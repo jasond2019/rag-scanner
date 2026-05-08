@@ -1,5 +1,6 @@
 """
 API 入口 - 提交扫描任务
+（简化版：暂不使用数据库，直接返回任务 ID）
 """
 
 from flask import Flask, request, jsonify
@@ -10,33 +11,6 @@ from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
-
-# 数据库相关（延迟加载）
-_db_initialized = False
-
-
-def _get_db_session():
-    """获取数据库会话（延迟初始化）"""
-    global _db_initialized
-    try:
-        import sys
-        import os
-        # 添加项目根目录到路径
-        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-
-        from lib.db import SessionLocal, init_db
-
-        if not _db_initialized:
-            try:
-                init_db()
-                _db_initialized = True
-            except Exception as e:
-                print(f"DB init warning: {e}")
-
-        return SessionLocal()
-    except Exception as e:
-        print(f"DB import error: {e}")
-        return None
 
 
 @app.route('/api/scan/submit', methods=['POST', 'GET', 'OPTIONS'])
@@ -77,26 +51,6 @@ def submit_scan():
         if url_match:
             url = url_match.group(1)
 
-    # 保存到数据库（尝试，失败则降级）
-    try:
-        db = _get_db_session()
-        if db:
-            from lib.models import ScanTask
-            task = ScanTask(
-                id=task_id,
-                target_type=input_type,
-                target_value=target_value,
-                step=step,
-                status='queued',
-                progress=0,
-                current_step='waiting'
-            )
-            db.add(task)
-            db.commit()
-            db.close()
-    except Exception as e:
-        print(f"DB save error: {e}")
-
     return jsonify({
         'code': 0,
         'message': 'success',
@@ -104,7 +58,8 @@ def submit_scan():
             'task_id': task_id,
             'status': 'queued',
             'url': url,
-            'input_type': input_type
+            'input_type': input_type,
+            'param_name': param_name
         }
     })
 

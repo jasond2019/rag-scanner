@@ -17,26 +17,6 @@ sys.path.insert(0, api_dir)
 app = Flask(__name__)
 CORS(app)
 
-# 数据库诊断信息
-DB_DIAG = {
-    'postgres_url_set': False,
-    'engine_created': False,
-    'session_available': False
-}
-
-
-def check_db():
-    """检查数据库状态"""
-    import os
-    DB_DIAG['postgres_url_set'] = bool(os.environ.get('POSTGRES_URL'))
-    try:
-        from lib.db import engine, SessionLocal
-        DB_DIAG['engine_created'] = bool(engine)
-        DB_DIAG['session_available'] = bool(SessionLocal)
-    except Exception as e:
-        DB_DIAG['import_error'] = str(e)
-    return DB_DIAG
-
 
 @app.route('/api/scan/submit', methods=['POST', 'GET', 'OPTIONS'])
 def submit_scan():
@@ -45,7 +25,11 @@ def submit_scan():
         return jsonify({'code': 0}), 200
 
     if request.method == 'GET':
-        db_status = check_db()
+        try:
+            from lib.db import get_db_status
+            db_status = get_db_status()
+        except Exception as e:
+            db_status = {'error': str(e)}
         return jsonify({
             'code': 0,
             'message': 'submit API is running',
@@ -78,10 +62,9 @@ def submit_scan():
             url = url_match.group(1)
 
     # 保存到数据库
-    db_status = check_db()
-    db_error = None
     try:
-        from lib.db import get_session, init_db, ScanTask
+        from lib.db import get_session, init_db, get_db_status, ScanTask
+        db_status = get_db_status()
         init_db()
         db = get_session()
         if db:
@@ -98,12 +81,9 @@ def submit_scan():
             db.close()
             db_status['saved'] = True
         else:
-            db_error = "No database session available"
             db_status['saved'] = False
     except Exception as e:
-        db_error = str(e)
-        db_status['saved'] = False
-        db_status['save_error'] = str(e)
+        db_status = {'save_error': str(e), 'saved': False}
 
     return jsonify({
         'code': 0,
@@ -114,8 +94,7 @@ def submit_scan():
             'url': url,
             'input_type': input_type,
             'param_name': param_name,
-            'db_status': db_status,
-            'db_error': db_error
+            'db_status': db_status
         }
     })
 

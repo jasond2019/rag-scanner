@@ -1,6 +1,6 @@
 """
 Vercel Postgres 数据库连接
-使用 pg8000 纯 Python 驱动（Vercel Serverless 兼容）
+支持 Neon Postgres 连接
 """
 
 import os
@@ -9,26 +9,31 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 
-# Vercel Postgres 环境变量
-POSTGRES_URL = os.environ.get('POSTGRES_URL')
+# Neon 提供多种环境变量，优先使用 DATABASE_URL（推荐）
+# 或 POSTGRES_URL（Vercel Postgres 模板）
+DATABASE_URL = os.environ.get('DATABASE_URL') or os.environ.get('POSTGRES_URL')
 
 engine = None
 SessionLocal = None
+db_error = None
 
-if POSTGRES_URL:
+if DATABASE_URL:
     try:
-        # pg8000 驱动，替换 postgresql:// 为 postgresql+pg8000://
-        db_url = POSTGRES_URL
+        # pg8000 是纯 Python 驱动，Vercel Serverless 兼容
+        db_url = DATABASE_URL
         if db_url.startswith('postgresql://'):
             db_url = db_url.replace('postgresql://', 'postgresql+pg8000://', 1)
 
-        engine = create_engine(db_url, pool_pre_ping=True)
+        engine = create_engine(db_url, pool_pre_ping=True, pool_size=1, max_overflow=0)
         SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-        print(f"Database engine created successfully")
+        print(f"Database engine created: {db_url[:30]}...")
     except Exception as e:
+        db_error = str(e)
         print(f"Database engine creation failed: {e}")
 else:
-    print("POSTGRES_URL not set, using fallback mode")
+    db_error = "No DATABASE_URL or POSTGRES_URL found"
+    print(f"Database URL not set. Available env vars: {list(os.environ.keys())}")
+
 
 Base = declarative_base()
 
@@ -65,9 +70,11 @@ def init_db():
     if engine:
         try:
             Base.metadata.create_all(bind=engine)
-            print("Database tables created/verified")
+            return True
         except Exception as e:
             print(f"init_db error: {e}")
+            return False
+    return False
 
 
 def get_session():
@@ -78,3 +85,14 @@ def get_session():
         except Exception as e:
             print(f"get_session error: {e}")
     return None
+
+
+def get_db_status():
+    """获取数据库状态（用于诊断）"""
+    return {
+        'database_url_set': bool(DATABASE_URL),
+        'engine_created': bool(engine),
+        'session_available': bool(SessionLocal),
+        'db_error': db_error,
+        'available_env_vars': [k for k in os.environ.keys() if 'DATABASE' in k or 'POSTGRES' in k or 'PG' in k]
+    }

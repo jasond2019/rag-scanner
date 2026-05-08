@@ -31,7 +31,7 @@ dependencies = [
     "Flask-Login==0.6.3",
     "Flask-SQLAlchemy==3.1.1",
     "SQLAlchemy==2.0.23",
-    "pg8000>=1.31.0",  # PostgreSQL 驱动（Vercel Serverless 兼容）
+    "psycopg[binary]>=3.1.0",  # PostgreSQL 驱动（SQLAlchemy 2.0 推荐，Vercel 兼容）
     "redis==5.0.1",
     "WeasyPrint==60.2",
     "requests==2.31.0",

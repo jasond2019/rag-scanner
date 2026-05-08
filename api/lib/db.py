@@ -1,6 +1,6 @@
 """
 Vercel Postgres 数据库连接
-支持 Neon Postgres 连接
+使用 psycopg (psycopg3) 纯 Python 驱动
 """
 
 import os
@@ -10,7 +10,6 @@ from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 
 # Neon 提供多种环境变量，优先使用 DATABASE_URL（推荐）
-# 或 POSTGRES_URL（Vercel Postgres 模板）
 DATABASE_URL = os.environ.get('DATABASE_URL') or os.environ.get('POSTGRES_URL')
 
 engine = None
@@ -19,20 +18,28 @@ db_error = None
 
 if DATABASE_URL:
     try:
-        # pg8000 是纯 Python 驱动，Vercel Serverless 兼容
+        # psycopg (psycopg3) 是 SQLAlchemy 2.0 推荐的纯 Python 驱动
+        # 支持 Vercel Serverless，无 channel_binding 兼容问题
         db_url = DATABASE_URL
         if db_url.startswith('postgresql://'):
-            db_url = db_url.replace('postgresql://', 'postgresql+pg8000://', 1)
+            db_url = db_url.replace('postgresql://', 'postgresql+psycopg://', 1)
 
-        engine = create_engine(db_url, pool_pre_ping=True, pool_size=1, max_overflow=0)
+        # 禁用 channel_binding 避免 pg8000 兼容问题
+        engine = create_engine(
+            db_url,
+            pool_pre_ping=True,
+            pool_size=1,
+            max_overflow=0,
+            connect_args={'connect_timeout': 10}
+        )
         SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-        print(f"Database engine created: {db_url[:30]}...")
+        print(f"Database engine created successfully")
     except Exception as e:
         db_error = str(e)
         print(f"Database engine creation failed: {e}")
 else:
-    db_error = "No DATABASE_URL or POSTGRES_URL found"
-    print(f"Database URL not set. Available env vars: {list(os.environ.keys())}")
+    db_error = "No DATABASE_URL found"
+    print("Database URL not set")
 
 
 Base = declarative_base()

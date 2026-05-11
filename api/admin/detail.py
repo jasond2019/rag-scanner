@@ -119,5 +119,59 @@ def get_task_detail():
         db.close()
 
 
+# ============ Logs API ============
+@app.route('/api/admin/logs', methods=['GET', 'POST', 'OPTIONS'])
+def get_audit_logs():
+    """获取审计日志"""
+    if request.method == 'OPTIONS':
+        return jsonify({'success': True}), 200
+
+    db = get_session()
+    if not db:
+        return jsonify({'error': 'Database not available', 'details': db_error}), 503
+
+    try:
+        limit = request.args.get('limit', default=100, type=int)
+        offset = request.args.get('offset', default=0, type=int)
+
+        tasks = db.query(ScanTask).order_by(
+            ScanTask.created_at.desc()
+        ).limit(limit).offset(offset).all()
+
+        logs = []
+        for task in tasks:
+            logs.append({
+                'type': 'task_created',
+                'task_id': task.id,
+                'target': task.target_value[:100] if task.target_value else '',
+                'status': task.status,
+                'timestamp': task.created_at.isoformat() if task.created_at else None,
+            })
+
+            if task.status == 'completed':
+                logs.append({
+                    'type': 'task_completed',
+                    'task_id': task.id,
+                    'score': task.score,
+                    'level': task.level,
+                    'vulnerability_count': db.query(Vulnerability).filter_by(task_id=task.id).count(),
+                    'timestamp': task.created_at.isoformat() if task.created_at else None,
+                })
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'logs': logs,
+                'total': len(logs),
+                'limit': limit,
+                'offset': offset
+            }
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
 # Vercel 入口
 handler = app

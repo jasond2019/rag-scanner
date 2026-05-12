@@ -20,49 +20,55 @@ app = Flask(__name__)
 CORS(app)
 
 
-# 扫描维度定义
+# 扫描维度定义（与检测器 RULE_ID 对应）
 SCAN_DIMENSIONS = [
     {
         'id': 'RAG-SEC-001',
         'name': 'Prompt Injection Detection',
         'description': '检测提示注入攻击，包括指令覆盖、角色扮演等',
         'rules_count': 286,
-        'category': 'injection'
+        'category': 'injection',
+        'detector': 'PromptInjectionDetector'
     },
     {
         'id': 'RAG-SEC-002',
-        'name': 'Jailbreak Attack Detection',
-        'description': '检测越狱攻击，包括 DAN、角色扮演绕过等',
-        'rules_count': 120,
-        'category': 'jailbreak'
-    },
-    {
-        'id': 'RAG-SEC-003',
         'name': 'Privacy Data Leak Detection',
         'description': '检测隐私数据泄露，包括 IP 地址、邮箱、电话等',
         'rules_count': 14,
-        'category': 'privacy'
-    },
-    {
-        'id': 'RAG-SEC-004',
-        'name': 'Sensitive Data Detection',
-        'description': '检测敏感数据泄露，包括 API Key、密码、密钥等',
-        'rules_count': 518,
-        'category': 'sensitive'
+        'category': 'privacy',
+        'detector': 'PrivacyDetector'
     },
     {
         'id': 'RAG-SEC-005',
         'name': 'Authentication Bypass Detection',
         'description': '检测认证绕过风险，未授权访问等',
         'rules_count': 10,
-        'category': 'auth'
+        'category': 'auth',
+        'detector': 'AuthBypassDetector'
+    },
+    {
+        'id': 'RAG-SEC-007',
+        'name': 'Sensitive Data Detection',
+        'description': '检测敏感数据泄露，包括 API Key、密码、密钥等',
+        'rules_count': 518,
+        'category': 'sensitive',
+        'detector': 'SensitiveDetector'
+    },
+    {
+        'id': 'RAG-SEC-008',
+        'name': 'Jailbreak Attack Detection',
+        'description': '检测越狱攻击，包括 DAN、角色扮演绕过等',
+        'rules_count': 120,
+        'category': 'jailbreak',
+        'detector': 'JailbreakDetector'
     },
     {
         'id': 'RAG-SEC-006',
         'name': 'Data Leak Detection',
         'description': '检测数据泄露风险，包括响应过度暴露等',
         'rules_count': 15,
-        'category': 'data_leak'
+        'category': 'data_leak',
+        'detector': 'DataLeakDetector'
     },
 ]
 

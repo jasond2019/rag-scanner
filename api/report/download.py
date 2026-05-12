@@ -20,6 +20,90 @@ app = Flask(__name__)
 CORS(app)
 
 
+# 扫描维度定义
+SCAN_DIMENSIONS = [
+    {
+        'id': 'RAG-SEC-001',
+        'name': 'Prompt Injection Detection',
+        'description': '检测提示注入攻击，包括指令覆盖、角色扮演等',
+        'rules_count': 286,
+        'category': 'injection'
+    },
+    {
+        'id': 'RAG-SEC-002',
+        'name': 'Jailbreak Attack Detection',
+        'description': '检测越狱攻击，包括 DAN、角色扮演绕过等',
+        'rules_count': 120,
+        'category': 'jailbreak'
+    },
+    {
+        'id': 'RAG-SEC-003',
+        'name': 'Privacy Data Leak Detection',
+        'description': '检测隐私数据泄露，包括 IP 地址、邮箱、电话等',
+        'rules_count': 14,
+        'category': 'privacy'
+    },
+    {
+        'id': 'RAG-SEC-004',
+        'name': 'Sensitive Data Detection',
+        'description': '检测敏感数据泄露，包括 API Key、密码、密钥等',
+        'rules_count': 518,
+        'category': 'sensitive'
+    },
+    {
+        'id': 'RAG-SEC-005',
+        'name': 'Authentication Bypass Detection',
+        'description': '检测认证绕过风险，未授权访问等',
+        'rules_count': 10,
+        'category': 'auth'
+    },
+    {
+        'id': 'RAG-SEC-006',
+        'name': 'Data Leak Detection',
+        'description': '检测数据泄露风险，包括响应过度暴露等',
+        'rules_count': 15,
+        'category': 'data_leak'
+    },
+]
+
+
+def _get_dimension_results(vulnerabilities):
+    """获取每个维度的检测结果"""
+    dimension_results = []
+
+    # 统计每个维度的漏洞
+    vuln_by_dimension = {}
+    for v in vulnerabilities:
+        dim_id = v.rule_id[:10] if v.rule_id else 'Unknown'
+        if dim_id not in vuln_by_dimension:
+            vuln_by_dimension[dim_id] = []
+        vuln_by_dimension[dim_id].append(v)
+
+    # 构建维度结果
+    for dim in SCAN_DIMENSIONS:
+        dim_id = dim['id']
+        dim_vulns = vuln_by_dimension.get(dim_id, [])
+
+        dimension_results.append({
+            'id': dim_id,
+            'name': dim['name'],
+            'description': dim['description'],
+            'rules_count': dim['rules_count'],
+            'category': dim['category'],
+            'tested': True,
+            'vulnerabilities_found': len(dim_vulns),
+            'severity_distribution': {
+                'critical': sum(1 for v in dim_vulns if v.severity == 'critical'),
+                'high': sum(1 for v in dim_vulns if v.severity == 'high'),
+                'medium': sum(1 for v in dim_vulns if v.severity == 'medium'),
+                'low': sum(1 for v in dim_vulns if v.severity == 'low'),
+            },
+            'score_impact': sum(v.score_deduction for v in dim_vulns),
+        })
+
+    return dimension_results
+
+
 def _generate_recommendations(vulnerabilities):
     """根据漏洞生成修复建议"""
     recommendations = []
@@ -54,9 +138,13 @@ def _generate_recommendations(vulnerabilities):
 
 def _build_report(task, vulnerabilities):
     """构建报告数据"""
+    dimension_results = _get_dimension_results(vulnerabilities)
+
     return {
         'report_id': f"RPT-{task.id}",
         'generated_at': datetime.utcnow().isoformat(),
+        'scanner_version': '1.0.0',
+        'rules_version': '1.0.0',
         'task': {
             'id': task.id,
             'target_type': task.target_type,
@@ -66,6 +154,12 @@ def _build_report(task, vulnerabilities):
             'level': task.level,
             'created_at': task.created_at.isoformat() if task.created_at else None,
         },
+        'scan_config': {
+            'dimensions': 6,
+            'total_rules': 963,
+            'scan_mode': 'quick',
+        },
+        'scan_dimensions': dimension_results,
         'summary': {
             'total_vulnerabilities': len(vulnerabilities),
             'critical_count': sum(1 for v in vulnerabilities if v.severity == 'critical'),
@@ -74,6 +168,8 @@ def _build_report(task, vulnerabilities):
             'low_count': sum(1 for v in vulnerabilities if v.severity == 'low'),
             'score': task.score,
             'risk_level': task.level,
+            'dimensions_passed': sum(1 for d in dimension_results if d['vulnerabilities_found'] == 0),
+            'dimensions_failed': sum(1 for d in dimension_results if d['vulnerabilities_found'] > 0),
         },
         'vulnerabilities': [
             {

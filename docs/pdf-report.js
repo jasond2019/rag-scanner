@@ -20,10 +20,37 @@ function getScoreColor(score) {
 
 // 生成 pdfmake 文档定义
 function generatePDFDefinition(reportData) {
-    const { task, summary, vulnerabilities, recommendations, report_id, generated_at } = reportData;
+    const { task, summary, vulnerabilities, recommendations, scan_dimensions, scan_config, report_id, generated_at } = reportData;
 
     const scoreColor = getScoreColor(task.score || 0);
     const levelColor = LEVEL_COLORS[task.level] || '#666';
+
+    // 扫描维度表格
+    const dimensionTableBody = [
+        [
+            { text: 'Dimension', style: 'tableHeader' },
+            { text: 'Rules', style: 'tableHeader' },
+            { text: 'Result', style: 'tableHeader' },
+            { text: 'Vulns', style: 'tableHeader' },
+            { text: 'Impact', style: 'tableHeader' }
+        ]
+    ];
+
+    if (scan_dimensions && scan_dimensions.length > 0) {
+        scan_dimensions.forEach(dim => {
+            const passed = dim.vulnerabilities_found === 0;
+            dimensionTableBody.push([
+                { text: dim.name.substring(0, 25), fontSize: 9 },
+                dim.rules_count.toString(),
+                { text: passed ? 'PASSED' : 'FAILED',
+                  color: passed ? '#38a169' : '#e53e3e',
+                  bold: true,
+                  alignment: 'center' },
+                dim.vulnerabilities_found.toString(),
+                `-${dim.score_impact || 0} pts`
+            ]);
+        });
+    }
 
     // 漏洞表格数据
     const vulnTableBody = [
@@ -226,6 +253,31 @@ function generatePDFDefinition(reportData) {
                         ]
                     }
                 ],
+                margin: [0, 5, 0, 20]
+            },
+
+            // 扫描维度
+            { text: 'SCAN DIMENSIONS', style: 'sectionTitle' },
+            {
+                text: `Total: ${scan_config?.dimensions || 6} dimensions, ${scan_config?.total_rules || 963} rules`,
+                style: 'metaInfo',
+                margin: [0, 0, 0, 10]
+            },
+            {
+                table: {
+                    widths: ['35%', '15%', '20%', '15%', '15%'],
+                    body: dimensionTableBody
+                },
+                layout: {
+                    hLineWidth: function(i) { return i === 0 ? 1 : 0.5; },
+                    vLineWidth: function() { return 0; },
+                    hLineColor: function() { return '#e0e0e0'; },
+                    paddingLeft: function() { return 6; },
+                    paddingRight: function() { return 6; },
+                    paddingTop: function() { return 5; },
+                    paddingBottom: function() { return 5; },
+                    fillColor: function(i) { return i === 0 ? '#f8f9fa' : null; }
+                },
                 margin: [0, 5, 0, 20]
             },
 

@@ -1,4 +1,12 @@
 {
   "version": 2,
-  "public": true
+  "public": true,
+  "rewrites": [
+    { "source": "/api/admin/stats", "destination": "/api/admin/main" },
+    { "source": "/api/admin/tasks", "destination": "/api/admin/main" },
+    { "source": "/api/admin/history", "destination": "/api/admin/main" },
+    { "source": "/api/admin/in_progress", "destination": "/api/admin/main" },
+    { "source": "/api/admin/logs", "destination": "/api/admin/detail" },
+    { "source": "/api/report/generate", "destination": "/api/report/download" }
+  ]
 }

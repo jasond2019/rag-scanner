@@ -7,6 +7,12 @@
     { "source": "/api/admin/history", "destination": "/api/admin/main" },
     { "source": "/api/admin/in_progress", "destination": "/api/admin/main" },
     { "source": "/api/admin/logs", "destination": "/api/admin/detail" },
-    { "source": "/api/report/generate", "destination": "/api/report/download" }
+    { "source": "/api/report/generate", "destination": "/api/report/download" },
+    { "source": "/", "destination": "/docs/index.html" },
+    { "source": "/app.js", "destination": "/docs/app.js" },
+    { "source": "/pdf-report.js", "destination": "/docs/pdf-report.js" },
+    { "source": "/style.css", "destination": "/docs/style.css" },
+    { "source": "/admin.html", "destination": "/docs/admin.html" },
+    { "source": "/admin.js", "destination": "/docs/admin.js" }
   ]
 }

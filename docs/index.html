@@ -81,7 +81,7 @@ Example 2 (URL): https://api.example.com/chat"></textarea>
 
             <div class="vulnerabilities" id="vulnerabilities"></div>
 
-            <a href="#" class="download-btn" id="downloadBtn">Download JSON Report</a>
+            <button class="download-btn" id="downloadBtn">Download PDF Report</button>
         </div>
 
         <!-- Features -->
@@ -102,6 +102,12 @@ Example 2 (URL): https://api.example.com/chat"></textarea>
         </div>
     </div>
 
+    <!-- pdfmake 库 - 浏览器端 PDF 生成 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+
+    <!-- 应用脚本 -->
     <script src="app.js"></script>
+    <script src="pdf-report.js"></script>
 </body>
 </html>

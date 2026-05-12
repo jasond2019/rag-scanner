@@ -322,10 +322,14 @@ function displayResult(result) {
         vulnContainer.innerHTML = '<p style="text-align: center; color: #666;">&#127881; No security vulnerabilities found!</p>';
     }
 
-    // 设置报告下载链接（JSON格式）
+    // 设置报告下载按钮 - PDF 格式
     const downloadBtn = document.getElementById('downloadBtn');
-    downloadBtn.href = `${API_URL}/api/report/download?task_id=${result.task_id || currentTaskId}`;
-    downloadBtn.textContent = 'Download JSON Report';
+    downloadBtn.onclick = function(e) {
+        e.preventDefault();
+        downloadPDFReport(result.task_id || currentTaskId);
+    };
+    downloadBtn.textContent = 'Download PDF Report';
+    downloadBtn.href = '#';
 }
 
 // 工具函数

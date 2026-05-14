@@ -1,32 +1,32 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RAG Scanner - RAG System Security Detection</title>
+    <title>RAG 安全扫描器 - 免费 RAG 系统安全检测</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>RAG Scanner</h1>
-        <p class="subtitle">Paste curl command or enter URL for one-click RAG system security detection</p>
+        <h1>RAG 安全扫描器</h1>
+        <p class="subtitle">粘贴 curl 命令或输入 URL，一键检测 RAG 系统安全漏洞</p>
 
-        <!-- Input Section -->
+        <!-- 输入区域 -->
         <div class="input-section">
-            <label class="input-label">Target URL</label>
-            <p class="input-hint">Supports curl command (recommended) or URL</p>
+            <label class="input-label">目标地址</label>
+            <p class="input-hint">支持直接粘贴 curl 命令（推荐）或输入 URL</p>
             <textarea id="inputBox"
-                      placeholder="Example 1 (curl): curl 'https://api.example.com/chat' -H 'Authorization: Bearer xxx' -d '{"query":"hello"}'
+                      placeholder="示例1 (curl): curl 'https://api.example.com/chat' -H 'Authorization: Bearer xxx' -d '{"query":"hello"}'
 
-Example 2 (URL): https://api.example.com/chat"></textarea>
+示例2 (URL): https://api.example.com/chat"></textarea>
             <p class="error-msg" id="errorMsg"></p>
         </div>
 
-        <!-- Preview Section -->
+        <!-- 解析预览区域 -->
         <div class="preview-section" id="previewSection">
             <div class="preview-title">
                 <span class="icon">&#128269;</span>
-                Parsed Result
+                解析结果
                 <span class="input-type-badge" id="inputTypeBadge"></span>
             </div>
 
@@ -41,38 +41,38 @@ Example 2 (URL): https://api.example.com/chat"></textarea>
             </div>
 
             <div class="preview-row">
-                <span class="preview-label">Param:</span>
+                <span class="preview-label">参数名:</span>
                 <select id="paramSelect">
                     <option value="query">query</option>
                     <option value="prompt">prompt</option>
                     <option value="message">message</option>
                     <option value="input">input</option>
                     <option value="question">question</option>
-                    <option value="custom">Custom...</option>
+                    <option value="custom">自定义...</option>
                 </select>
-                <input type="text" id="customParam" placeholder="Enter param name">
+                <input type="text" id="customParam" placeholder="输入参数名">
             </div>
 
             <div class="preview-row">
-                <span class="preview-label">Auth:</span>
+                <span class="preview-label">认证:</span>
                 <span class="preview-value" id="parsedAuth">-</span>
-                <input type="text" id="authToken" placeholder="Enter Bearer Token...">
+                <input type="text" id="authToken" placeholder="输入 Bearer Token...">
                 <span class="auth-hint" id="authHint"></span>
             </div>
         </div>
 
-        <!-- Scan Button -->
-        <button class="btn" id="submitBtn" onclick="startScan()">Start Security Scan</button>
+        <!-- 扫描按钮 -->
+        <button class="btn" id="submitBtn" onclick="startScan()">开始安全扫描</button>
 
-        <!-- Progress Section -->
+        <!-- 进度区域 -->
         <div class="progress-container" id="progressContainer">
             <div class="progress-bar">
                 <div class="progress-fill" id="progressFill"></div>
             </div>
-            <p class="progress-text" id="progressText">Initializing...</p>
+            <p class="progress-text" id="progressText">初始化中...</p>
         </div>
 
-        <!-- Result Section -->
+        <!-- 结果区域 -->
         <div class="result-container" id="resultContainer">
             <div class="score-card">
                 <div class="score-number" id="scoreNumber">--</div>
@@ -81,23 +81,23 @@ Example 2 (URL): https://api.example.com/chat"></textarea>
 
             <div class="vulnerabilities" id="vulnerabilities"></div>
 
-            <button class="download-btn" id="downloadBtn">Download PDF Report</button>
+            <button class="download-btn" id="downloadBtn">下载 PDF 报告</button>
         </div>
 
-        <!-- Features -->
+        <!-- 功能展示 -->
         <div class="features">
-            <h3>10 Security Checks</h3>
+            <h3>10 项安全检测</h3>
             <div class="feature-grid">
-                <div class="feature-item"><div class="feature-icon">&#128140;</div><div class="feature-name">Prompt Injection</div></div>
-                <div class="feature-item"><div class="feature-icon">&#128274;</div><div class="feature-name">Data Leakage</div></div>
-                <div class="feature-item"><div class="feature-icon">&#128196;</div><div class="feature-name">Vector Injection</div></div>
-                <div class="feature-item"><div class="feature-icon">&#127919;</div><div class="feature-name">Retrieval Pollution</div></div>
-                <div class="feature-item"><div class="feature-icon">&#128273;</div><div class="feature-name">Auth Bypass</div></div>
-                <div class="feature-item"><div class="feature-icon">&#128202;</div><div class="feature-name">API Abuse</div></div>
-                <div class="feature-item"><div class="feature-icon">&#128221;</div><div class="feature-name">Log Leakage</div></div>
-                <div class="feature-item"><div class="feature-icon">&#129302;</div><div class="feature-name">Model Jailbreak</div></div>
-                <div class="feature-item"><div class="feature-icon">&#128230;</div><div class="feature-name">Dependency Vuln</div></div>
-                <div class="feature-item"><div class="feature-icon">&#9881;</div><div class="feature-name">Config Error</div></div>
+                <div class="feature-item"><div class="feature-icon">&#128140;</div><div class="feature-name">提示词注入</div></div>
+                <div class="feature-item"><div class="feature-icon">&#128274;</div><div class="feature-name">数据泄露</div></div>
+                <div class="feature-item"><div class="feature-icon">&#128196;</div><div class="feature-name">向量注入</div></div>
+                <div class="feature-item"><div class="feature-icon">&#127919;</div><div class="feature-name">检索污染</div></div>
+                <div class="feature-item"><div class="feature-icon">&#128273;</div><div class="feature-name">权限绕过</div></div>
+                <div class="feature-item"><div class="feature-icon">&#128202;</div><div class="feature-name">API 滥用</div></div>
+                <div class="feature-item"><div class="feature-icon">&#128221;</div><div class="feature-name">日志泄露</div></div>
+                <div class="feature-item"><div class="feature-icon">&#129302;</div><div class="feature-name">模型越狱</div></div>
+                <div class="feature-item"><div class="feature-icon">&#128230;</div><div class="feature-name">依赖漏洞</div></div>
+                <div class="feature-item"><div class="feature-icon">&#9881;</div><div class="feature-name">配置错误</div></div>
             </div>
         </div>
     </div>

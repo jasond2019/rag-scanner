@@ -1,8 +1,8 @@
-// RAG Scanner Admin Dashboard JavaScript
+// RAG Scanner 管理后台 JavaScript
 
 const API_BASE = '/api';
 
-// Section Navigation
+// 区域导航
 function showSection(section) {
     document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
     document.querySelector(`.nav-tab:nth-child(${getTabIndex(section)})`).classList.add('active');
@@ -10,7 +10,7 @@ function showSection(section) {
     document.querySelectorAll('[id$="-section"]').forEach(s => s.style.display = 'none');
     document.getElementById(`${section}-section`).style.display = 'block';
 
-    // Load data for the section
+    // 加载区域数据
     switch(section) {
         case 'stats': loadStats(); break;
         case 'tasks': loadTasks(); break;
@@ -24,12 +24,12 @@ function getTabIndex(section) {
     return tabs.indexOf(section) + 1;
 }
 
-// Statistics
+// 统计数据
 async function loadStats() {
     const statsGrid = document.getElementById('statsGrid');
     const riskGrid = document.getElementById('riskGrid');
-    statsGrid.innerHTML = '<div class="loading">Loading...</div>';
-    riskGrid.innerHTML = '<div class="loading">Loading...</div>';
+    statsGrid.innerHTML = '<div class="loading">加载中...</div>';
+    riskGrid.innerHTML = '<div class="loading">加载中...</div>';
 
     try {
         const resp = await fetch(`${API_BASE}/admin/stats`);
@@ -38,36 +38,36 @@ async function loadStats() {
         if (data.success) {
             const stats = data.data;
             statsGrid.innerHTML = `
-                <div class="stat-card"><div class="stat-value">${stats.total_tasks}</div><div class="stat-label">Total Tasks</div></div>
-                <div class="stat-card"><div class="stat-value">${stats.completed_tasks}</div><div class="stat-label">Completed</div></div>
-                <div class="stat-card"><div class="stat-value">${stats.in_progress_tasks}</div><div class="stat-label">In Progress</div></div>
-                <div class="stat-card"><div class="stat-value">${stats.failed_tasks}</div><div class="stat-label">Failed</div></div>
-                <div class="stat-card"><div class="stat-value">${stats.avg_score}</div><div class="stat-label">Avg Score</div></div>
+                <div class="stat-card"><div class="stat-value">${stats.total_tasks}</div><div class="stat-label">总任务数</div></div>
+                <div class="stat-card"><div class="stat-value">${stats.completed_tasks}</div><div class="stat-label">已完成</div></div>
+                <div class="stat-card"><div class="stat-value">${stats.in_progress_tasks}</div><div class="stat-label">进行中</div></div>
+                <div class="stat-card"><div class="stat-value">${stats.failed_tasks}</div><div class="stat-label">失败</div></div>
+                <div class="stat-card"><div class="stat-value">${stats.avg_score}</div><div class="stat-label">平均评分</div></div>
             `;
 
             const risk = stats.risk_distribution;
             riskGrid.innerHTML = `
-                <div class="stat-card"><div class="stat-value">${risk.critical}</div><div class="stat-label">Critical</div></div>
-                <div class="stat-card"><div class="stat-value">${risk.high}</div><div class="stat-label">High</div></div>
-                <div class="stat-card"><div class="stat-value">${risk.medium}</div><div class="stat-label">Medium</div></div>
-                <div class="stat-card"><div class="stat-value">${risk.low}</div><div class="stat-label">Low</div></div>
+                <div class="stat-card"><div class="stat-value">${risk.critical}</div><div class="stat-label">严重</div></div>
+                <div class="stat-card"><div class="stat-value">${risk.high}</div><div class="stat-label">高危</div></div>
+                <div class="stat-card"><div class="stat-value">${risk.medium}</div><div class="stat-label">中危</div></div>
+                <div class="stat-card"><div class="stat-value">${risk.low}</div><div class="stat-label">低危</div></div>
             `;
         } else {
-            statsGrid.innerHTML = `<div class="loading">Error: ${data.error}</div>`;
+            statsGrid.innerHTML = `<div class="loading">错误: ${data.error}</div>`;
         }
     } catch (e) {
-        statsGrid.innerHTML = `<div class="loading">Error: ${e.message}</div>`;
+        statsGrid.innerHTML = `<div class="loading">错误: ${e.message}</div>`;
     }
 }
 
-// Tasks List
+// 任务列表
 let currentPage = 0;
 const pageSize = 20;
 
 async function loadTasks(page = 0) {
     currentPage = page;
     const tbody = document.getElementById('tasksBody');
-    tbody.innerHTML = '<tr><td colspan="7" class="loading">Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="loading">加载中...</td></tr>';
 
     try {
         const resp = await fetch(`${API_BASE}/admin/tasks?limit=${pageSize}&offset=${page * pageSize}`);
@@ -78,21 +78,21 @@ async function loadTasks(page = 0) {
                 <tr>
                     <td>${task.id}</td>
                     <td>${truncate(task.target_value, 50)}</td>
-                    <td><span class="status-badge status-${task.status}">${task.status}</span></td>
+                    <td><span class="status-badge status-${task.status}">${getStatusText(task.status)}</span></td>
                     <td>${task.score || '--'}</td>
-                    <td>${task.level ? `<span class="level-badge level-${task.level}">${task.level}</span>` : '--'}</td>
+                    <td>${task.level ? `<span class="level-badge level-${task.level}">${getLevelText(task.level)}</span>` : '--'}</td>
                     <td>${formatTime(task.created_at)}</td>
-                    <td><button onclick="showDetail('${task.id}')">View</button></td>
+                    <td><button class="refresh-btn" onclick="showDetail('${task.id}')">查看</button></td>
                 </tr>
             `).join('');
 
-            // Pagination
+            // 分页
             renderPagination(data.data.total, page);
         } else {
-            tbody.innerHTML = `<tr><td colspan="7" class="loading">Error: ${data.error}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" class="loading">错误: ${data.error}</td></tr>`;
         }
     } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="7" class="loading">Error: ${e.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="loading">错误: ${e.message}</td></tr>`;
     }
 }
 
@@ -112,10 +112,10 @@ function renderPagination(total, current) {
     pagination.innerHTML = html;
 }
 
-// In Progress Tasks
+// 进行中任务
 async function loadInProgress() {
     const tbody = document.getElementById('inProgressBody');
-    tbody.innerHTML = '<tr><td colspan="6" class="loading">Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="loading">加载中...</td></tr>';
 
     try {
         const resp = await fetch(`${API_BASE}/admin/in_progress`);
@@ -123,13 +123,13 @@ async function loadInProgress() {
 
         if (data.success) {
             if (data.data.tasks.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="loading">No tasks in progress</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="loading">没有进行中的任务</td></tr>';
             } else {
                 tbody.innerHTML = data.data.tasks.map(task => `
                     <tr>
                         <td>${task.id}</td>
                         <td>${truncate(task.target_value, 50)}</td>
-                        <td><span class="status-badge status-${task.status}">${task.status}</span></td>
+                        <td><span class="status-badge status-${task.status}">${getStatusText(task.status)}</span></td>
                         <td>${task.progress}%</td>
                         <td>${task.current_step}</td>
                         <td>${formatTime(task.created_at)}</td>
@@ -137,17 +137,17 @@ async function loadInProgress() {
                 `).join('');
             }
         } else {
-            tbody.innerHTML = `<tr><td colspan="6" class="loading">Error: ${data.error}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" class="loading">错误: ${data.error}</td></tr>`;
         }
     } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="6" class="loading">Error: ${e.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="loading">错误: ${e.message}</td></tr>`;
     }
 }
 
-// Audit Logs
+// 审计日志
 async function loadLogs() {
     const tbody = document.getElementById('logsBody');
-    tbody.innerHTML = '<tr><td colspan="4" class="loading">Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" class="loading">加载中...</td></tr>';
 
     try {
         const resp = await fetch(`${API_BASE}/admin/logs?limit=100`);
@@ -163,19 +163,19 @@ async function loadLogs() {
                 </tr>
             `).join('');
         } else {
-            tbody.innerHTML = `<tr><td colspan="4" class="loading">Error: ${data.error}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="4" class="loading">错误: ${data.error}</td></tr>`;
         }
     } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="4" class="loading">Error: ${e.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" class="loading">错误: ${e.message}</td></tr>`;
     }
 }
 
-// Task Detail
+// 任务详情
 async function showDetail(taskId) {
     const modal = document.getElementById('detailModal');
     const body = document.getElementById('detailBody');
     modal.style.display = 'flex';
-    body.innerHTML = '<div class="loading">Loading...</div>';
+    body.innerHTML = '<div class="loading">加载中...</div>';
 
     try {
         const resp = await fetch(`${API_BASE}/admin/detail?task_id=${taskId}`);
@@ -183,48 +183,48 @@ async function showDetail(taskId) {
 
         if (data.success) {
             const detail = data.data;
-            document.getElementById('detailTitle').textContent = `Task: ${taskId}`;
+            document.getElementById('detailTitle').textContent = `任务: ${taskId}`;
 
             body.innerHTML = `
                 <div class="stats-grid">
-                    <div class="stat-card"><div class="stat-value">${detail.task.score || '--'}</div><div class="stat-label">Score</div></div>
-                    <div class="stat-card"><div class="stat-value">${detail.total_vulnerabilities}</div><div class="stat-label">Vulnerabilities</div></div>
-                    <div class="stat-card"><div class="stat-value">${detail.critical_count}</div><div class="stat-label">Critical</div></div>
-                    <div class="stat-card"><div class="stat-value">${detail.high_count}</div><div class="stat-label">High</div></div>
+                    <div class="stat-card"><div class="stat-value">${detail.task.score || '--'}</div><div class="stat-label">评分</div></div>
+                    <div class="stat-card"><div class="stat-value">${detail.total_vulnerabilities}</div><div class="stat-label">漏洞数</div></div>
+                    <div class="stat-card"><div class="stat-value">${detail.critical_count}</div><div class="stat-label">严重</div></div>
+                    <div class="stat-card"><div class="stat-value">${detail.high_count}</div><div class="stat-label">高危</div></div>
                 </div>
 
-                <h3 class="section-title">Task Info</h3>
+                <h3 class="section-title">任务信息</h3>
                 <table class="task-table">
-                    <tr><th>Target Type</th><td>${detail.task.target_type}</td></tr>
-                    <tr><th>Target Value</th><td>${detail.task.target_value}</td></tr>
-                    <tr><th>Status</th><td><span class="status-badge status-${detail.task.status}">${detail.task.status}</span></td></tr>
-                    <tr><th>Risk Level</th><td>${detail.task.level ? `<span class="level-badge level-${detail.task.level}">${detail.task.level}</span>` : '--'}</td></tr>
-                    <tr><th>Created</th><td>${formatTime(detail.task.created_at)}</td></tr>
+                    <tr><th>目标类型</th><td>${detail.task.target_type}</td></tr>
+                    <tr><th>目标地址</th><td>${detail.task.target_value}</td></tr>
+                    <tr><th>状态</th><td><span class="status-badge status-${detail.task.status}">${getStatusText(detail.task.status)}</span></td></tr>
+                    <tr><th>风险等级</th><td>${detail.task.level ? `<span class="level-badge level-${detail.task.level}">${getLevelText(detail.task.level)}</span>` : '--'}</td></tr>
+                    <tr><th>创建时间</th><td>${formatTime(detail.task.created_at)}</td></tr>
                 </table>
 
-                <h3 class="section-title">Vulnerabilities</h3>
+                <h3 class="section-title">漏洞列表</h3>
                 <div class="vuln-list">
                     ${detail.vulnerabilities.map(v => `
                         <div class="vuln-card">
                             <div class="vuln-card-header">
                                 <span class="vuln-card-name">${v.name}</span>
-                                <span class="level-badge level-${v.severity}">${v.severity}</span>
+                                <span class="level-badge level-${v.severity}">${getLevelText(v.severity)}</span>
                             </div>
-                            <div class="vuln-card-desc">${v.description || 'No description'}</div>
-                            ${v.suggestion ? `<div class="vuln-card-desc"><strong>Suggestion:</strong> ${v.suggestion}</div>` : ''}
+                            <div class="vuln-card-desc">${v.description || '无描述'}</div>
+                            ${v.suggestion ? `<div class="vuln-card-desc"><strong>建议:</strong> ${v.suggestion}</div>` : ''}
                         </div>
                     `).join('')}
                 </div>
 
                 <div style="margin-top: 20px;">
-                    <button class="refresh-btn" onclick="downloadReport('${taskId}')">Download Report</button>
+                    <button class="refresh-btn" onclick="downloadReport('${taskId}')">下载报告</button>
                 </div>
             `;
         } else {
-            body.innerHTML = `<div class="loading">Error: ${data.error}</div>`;
+            body.innerHTML = `<div class="loading">错误: ${data.error}</div>`;
         }
     } catch (e) {
-        body.innerHTML = `<div class="loading">Error: ${e.message}</div>`;
+        body.innerHTML = `<div class="loading">错误: ${e.message}</div>`;
     }
 }
 
@@ -236,7 +236,7 @@ function downloadReport(taskId) {
     window.open(`${API_BASE}/report/download?task_id=${taskId}`, '_blank');
 }
 
-// Helper Functions
+// 辅助函数
 function truncate(str, len) {
     if (!str) return '--';
     return str.length > len ? str.substring(0, len) + '...' : str;
@@ -246,13 +246,33 @@ function formatTime(isoStr) {
     if (!isoStr) return '--';
     try {
         const d = new Date(isoStr);
-        return d.toLocaleString();
+        return d.toLocaleString('zh-CN');
     } catch {
         return isoStr;
     }
 }
 
-// Initialize
+function getStatusText(status) {
+    const map = {
+        'completed': '已完成',
+        'running': '进行中',
+        'queued': '排队中',
+        'failed': '失败'
+    };
+    return map[status] || status;
+}
+
+function getLevelText(level) {
+    const map = {
+        'critical': '严重',
+        'high': '高危',
+        'medium': '中危',
+        'low': '低危'
+    };
+    return map[level] || level;
+}
+
+// 初始化
 document.addEventListener('DOMContentLoaded', () => {
     loadStats();
 });

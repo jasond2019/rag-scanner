@@ -84,26 +84,26 @@ async function parseInput(input) {
                 if (data.data.auth_header) {
                     parsedAuthSpan.textContent = data.data.auth_header;
                     authTokenInput.style.display = 'none';
-                    authHint.textContent = '(parsed from curl)';
+                    authHint.textContent = '(已从 curl 解析)';
                     authHint.className = 'auth-hint auth-from-curl';
                     // 保存完整 headers
                     parsedData.headers = data.data.headers;
                 } else {
-                    parsedAuthSpan.textContent = '(none)';
+                    parsedAuthSpan.textContent = '(无)';
                     authTokenInput.style.display = 'inline-block';
-                    authHint.textContent = '(required)';
+                    authHint.textContent = '(需手动输入)';
                     authHint.className = 'auth-hint auth-needed';
                     parsedData.headers = {};
                 }
 
                 previewSection.style.display = 'block';
             } else {
-                errorMsg.textContent = 'curl parse failed: ' + data.message;
+                errorMsg.textContent = 'curl 解析失败: ' + data.message;
                 errorMsg.style.display = 'block';
                 previewSection.style.display = 'none';
             }
         } catch (e) {
-            errorMsg.textContent = 'Request failed: ' + e.message;
+            errorMsg.textContent = '解析请求失败: ' + e.message;
             errorMsg.style.display = 'block';
             previewSection.style.display = 'none';
         }
@@ -129,17 +129,17 @@ async function parseInput(input) {
         document.getElementById('customParam').style.display = 'none';
 
         // URL 需要手动输入认证
-        document.getElementById('parsedAuth').textContent = '(config needed)';
+        document.getElementById('parsedAuth').textContent = '(需配置)';
         document.getElementById('authToken').style.display = 'inline-block';
         document.getElementById('authToken').value = '';
-        document.getElementById('authHint').textContent = '(no auth detected)';
+        document.getElementById('authHint').textContent = '(未检测到认证)';
         document.getElementById('authHint').className = 'auth-hint auth-needed';
 
         previewSection.style.display = 'block';
     }
     // 无效输入
     else {
-        errorMsg.textContent = 'Please enter valid URL or curl command';
+        errorMsg.textContent = '请输入有效的 URL 或 curl 命令';
         errorMsg.style.display = 'block';
         previewSection.style.display = 'none';
         parsedData = null;
@@ -158,7 +158,7 @@ async function startScan() {
     if (paramName === 'custom') {
         paramName = document.getElementById('customParam').value.trim();
         if (!paramName) {
-            alert('Please enter custom parameter name');
+            alert('请输入自定义参数名');
             return;
         }
     }
@@ -177,7 +177,7 @@ async function startScan() {
     document.getElementById('progressContainer').style.display = 'block';
     document.getElementById('resultContainer').style.display = 'none';
     document.getElementById('progressFill').style.width = '0%';
-    document.getElementById('progressText').textContent = 'Submitting task...';
+    document.getElementById('progressText').textContent = '提交任务...';
 
     try {
         // Step 1: 创建任务
@@ -194,7 +194,7 @@ async function startScan() {
         const submitData = await submitResponse.json();
 
         if (submitData.code !== 0) {
-            alert('Submit failed: ' + submitData.message);
+            alert('提交失败: ' + submitData.message);
             document.getElementById('submitBtn').disabled = false;
             document.getElementById('progressContainer').style.display = 'none';
             return;
@@ -202,7 +202,7 @@ async function startScan() {
 
         currentTaskId = submitData.data.task_id;
         document.getElementById('progressFill').style.width = '30%';
-        document.getElementById('progressText').textContent = 'Executing security scan...';
+        document.getElementById('progressText').textContent = '执行安全扫描...';
 
         // Step 2: 执行扫描
         const executeResponse = await fetch(`${API_URL}/api/scan/execute`, {
@@ -219,7 +219,7 @@ async function startScan() {
         const executeData = await executeResponse.json();
 
         document.getElementById('progressFill').style.width = '100%';
-        document.getElementById('progressText').textContent = 'Scan completed!';
+        document.getElementById('progressText').textContent = '扫描完成!';
 
         if (executeData.code === 0) {
             // 直接显示结果
@@ -230,7 +230,7 @@ async function startScan() {
         }
 
     } catch (error) {
-        alert('Network error: ' + error.message);
+        alert('网络错误: ' + error.message);
         document.getElementById('submitBtn').disabled = false;
         document.getElementById('progressContainer').style.display = 'none';
     }
@@ -252,12 +252,12 @@ function startPolling(taskId) {
                     loadResult(taskId);
                 } else if (data.data.status === 'failed') {
                     clearInterval(pollTimer);
-                    document.getElementById('progressText').textContent = 'Scan failed';
+                    document.getElementById('progressText').textContent = '扫描失败';
                     document.getElementById('submitBtn').disabled = false;
                 }
             }
         } catch (e) {
-            console.error('Polling error:', e);
+            console.error('轮询错误:', e);
         }
     }, 2000);
 }
@@ -266,7 +266,7 @@ function startPolling(taskId) {
 function updateProgress(data) {
     document.getElementById('progressFill').style.width = data.progress + '%';
     document.getElementById('progressText').textContent =
-        'Checking: ' + data.current_step + ' (' + data.progress + '%)';
+        '检测中: ' + data.current_step + ' (' + data.progress + '%)';
 }
 
 // 加载结果（备用）
@@ -279,7 +279,7 @@ async function loadResult(taskId) {
             displayResult(data.data);
         }
     } catch (error) {
-        console.error('Load result failed:', error);
+        console.error('加载结果失败:', error);
     }
 }
 
@@ -295,8 +295,8 @@ function displayResult(result) {
     scoreEl.textContent = result.score;
     scoreEl.style.color = getScoreColor(result.score);
 
-    const levelText = { high: 'High Risk', medium: 'Medium Risk', low: 'Low Risk' };
-    levelEl.textContent = levelText[result.level] || 'Unknown';
+    const levelText = { high: '高风险', medium: '中风险', low: '低风险' };
+    levelEl.textContent = levelText[result.level] || '未知风险';
 
     const vulnContainer = document.getElementById('vulnerabilities');
     vulnContainer.innerHTML = '';
@@ -319,7 +319,7 @@ function displayResult(result) {
             vulnContainer.appendChild(vulnEl);
         });
     } else {
-        vulnContainer.innerHTML = '<p style="text-align: center; color: #666;">&#127881; No security vulnerabilities found!</p>';
+        vulnContainer.innerHTML = '<p style="text-align: center; color: #666;">&#127881; 未发现安全漏洞!</p>';
     }
 
     // 设置报告下载按钮 - PDF 格式
@@ -328,7 +328,7 @@ function displayResult(result) {
         e.preventDefault();
         downloadPDFReport(result.task_id || currentTaskId);
     };
-    downloadBtn.textContent = 'Download PDF Report';
+    downloadBtn.textContent = '下载 PDF 报告';
     downloadBtn.href = '#';
 }
 
@@ -346,6 +346,6 @@ function getScoreColor(score) {
 }
 
 function getSeverityText(severity) {
-    const map = { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low' };
+    const map = { critical: '严重', high: '高危', medium: '中危', low: '低危' };
     return map[severity] || severity;
 }

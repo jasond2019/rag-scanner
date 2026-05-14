@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RAG Scanner - Admin Dashboard</title>
+    <title>RAG 安全扫描器 - 管理后台</title>
     <link rel="stylesheet" href="style.css">
     <style>
         /* Admin specific styles */
@@ -172,98 +172,98 @@
 </head>
 <body>
     <div class="container admin-container">
-        <h1>RAG Scanner Admin</h1>
-        <p class="subtitle">Security Scan Dashboard & Task Management</p>
+        <h1>RAG 安全扫描器</h1>
+        <p class="subtitle">管理后台 - 安全扫描仪表盘与任务管理</p>
 
-        <!-- Navigation Tabs -->
+        <!-- 导航标签 -->
         <div class="nav-tabs">
-            <div class="nav-tab active" onclick="showSection('stats')">Statistics</div>
-            <div class="nav-tab" onclick="showSection('tasks')">All Tasks</div>
-            <div class="nav-tab" onclick="showSection('in_progress')">In Progress</div>
-            <div class="nav-tab" onclick="showSection('logs')">Audit Logs</div>
+            <div class="nav-tab active" onclick="showSection('stats')">统计数据</div>
+            <div class="nav-tab" onclick="showSection('tasks')">全部任务</div>
+            <div class="nav-tab" onclick="showSection('in_progress')">进行中</div>
+            <div class="nav-tab" onclick="showSection('logs')">审计日志</div>
         </div>
 
-        <!-- Statistics Section -->
+        <!-- 统计数据区域 -->
         <div id="stats-section">
-            <button class="refresh-btn" onclick="loadStats()">Refresh</button>
+            <button class="refresh-btn" onclick="loadStats()">刷新</button>
             <div class="stats-grid" id="statsGrid">
-                <div class="loading">Loading statistics...</div>
+                <div class="loading">加载统计数据...</div>
             </div>
 
-            <h3 class="section-title">Risk Distribution</h3>
+            <h3 class="section-title">风险分布</h3>
             <div class="stats-grid" id="riskGrid">
-                <div class="loading">Loading...</div>
+                <div class="loading">加载中...</div>
             </div>
         </div>
 
-        <!-- Tasks Section -->
+        <!-- 任务列表区域 -->
         <div id="tasks-section" style="display:none;">
-            <button class="refresh-btn" onclick="loadTasks()">Refresh</button>
+            <button class="refresh-btn" onclick="loadTasks()">刷新</button>
             <table class="task-table">
                 <thead>
                     <tr>
-                        <th>Task ID</th>
-                        <th>Target</th>
-                        <th>Status</th>
-                        <th>Score</th>
-                        <th>Level</th>
-                        <th>Created</th>
-                        <th>Action</th>
+                        <th>任务 ID</th>
+                        <th>目标</th>
+                        <th>状态</th>
+                        <th>评分</th>
+                        <th>风险等级</th>
+                        <th>创建时间</th>
+                        <th>操作</th>
                     </tr>
                 </thead>
                 <tbody id="tasksBody">
-                    <tr><td colspan="7" class="loading">Loading tasks...</td></tr>
+                    <tr><td colspan="7" class="loading">加载任务列表...</td></tr>
                 </tbody>
             </table>
             <div class="pagination" id="tasksPagination"></div>
         </div>
 
-        <!-- In Progress Section -->
+        <!-- 进行中任务区域 -->
         <div id="in_progress-section" style="display:none;">
-            <button class="refresh-btn" onclick="loadInProgress()">Refresh</button>
+            <button class="refresh-btn" onclick="loadInProgress()">刷新</button>
             <table class="task-table">
                 <thead>
                     <tr>
-                        <th>Task ID</th>
-                        <th>Target</th>
-                        <th>Status</th>
-                        <th>Progress</th>
-                        <th>Step</th>
-                        <th>Created</th>
+                        <th>任务 ID</th>
+                        <th>目标</th>
+                        <th>状态</th>
+                        <th>进度</th>
+                        <th>当前步骤</th>
+                        <th>创建时间</th>
                     </tr>
                 </thead>
                 <tbody id="inProgressBody">
-                    <tr><td colspan="6" class="loading">Loading...</td></tr>
+                    <tr><td colspan="6" class="loading">加载中...</td></tr>
                 </tbody>
             </table>
         </div>
 
-        <!-- Logs Section -->
+        <!-- 日志区域 -->
         <div id="logs-section" style="display:none;">
-            <button class="refresh-btn" onclick="loadLogs()">Refresh</button>
+            <button class="refresh-btn" onclick="loadLogs()">刷新</button>
             <table class="task-table">
                 <thead>
                     <tr>
-                        <th>Type</th>
-                        <th>Task ID</th>
-                        <th>Details</th>
-                        <th>Timestamp</th>
+                        <th>类型</th>
+                        <th>任务 ID</th>
+                        <th>详情</th>
+                        <th>时间</th>
                     </tr>
                 </thead>
                 <tbody id="logsBody">
-                    <tr><td colspan="4" class="loading">Loading logs...</td></tr>
+                    <tr><td colspan="4" class="loading">加载日志...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <!-- Detail Modal -->
+    <!-- 详情弹窗 -->
     <div class="detail-modal" id="detailModal">
         <div class="detail-content">
             <span class="close-btn" onclick="closeDetail()">&times;</span>
-            <h2 id="detailTitle">Task Detail</h2>
+            <h2 id="detailTitle">任务详情</h2>
             <div id="detailBody">
-                <div class="loading">Loading...</div>
+                <div class="loading">加载中...</div>
             </div>
         </div>
     </div>

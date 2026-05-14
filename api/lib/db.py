@@ -58,6 +58,7 @@ class ScanTask(Base):
     score = Column(Integer, nullable=True)
     level = Column(String(32), nullable=True)
     user_id = Column(String(64), nullable=True)  # 用户ID（可选）
+    error_message = Column(Text, nullable=True)  # 错误信息（失败时）
     created_at = Column(DateTime, default=datetime.utcnow)
     completed_at = Column(DateTime, nullable=True)  # 完成时间
 

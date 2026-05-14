@@ -1,6 +1,6 @@
 /**
  * RAG Scanner Frontend
- * 使用 HTTP Polling 替代 WebSocket
+ * HTTP Polling 进度更新
  */
 
 // API 基础 URL - Vercel 后端地址
@@ -146,7 +146,7 @@ async function parseInput(input) {
     }
 }
 
-// 开始扫描
+// ===== 开始扫描（轮询模式） =====
 async function startScan() {
     if (!parsedData) {
         await parseInput(document.getElementById('inputBox').value);
@@ -179,8 +179,14 @@ async function startScan() {
     document.getElementById('progressFill').style.width = '0%';
     document.getElementById('progressText').textContent = '提交任务...';
 
+    // 清除之前可能存在的错误显示
+    const errorBox = document.getElementById('errorBox');
+    if (errorBox) {
+        errorBox.style.display = 'none';
+    }
+
     try {
-        // Step 1: 创建任务
+        // ===== Step 1: 提交任务 =====
         const submitResponse = await fetch(`${API_URL}/api/scan/submit`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -194,18 +200,14 @@ async function startScan() {
         const submitData = await submitResponse.json();
 
         if (submitData.code !== 0) {
-            alert('提交失败: ' + submitData.message);
-            document.getElementById('submitBtn').disabled = false;
-            document.getElementById('progressContainer').style.display = 'none';
+            showError('提交失败: ' + submitData.message);
             return;
         }
 
         currentTaskId = submitData.data.task_id;
-        document.getElementById('progressFill').style.width = '30%';
-        document.getElementById('progressText').textContent = '执行安全扫描...';
 
-        // Step 2: 执行扫描
-        const executeResponse = await fetch(`${API_URL}/api/scan/execute`, {
+        // ===== Step 2: 启动扫描（不等待返回） =====
+        fetch(`${API_URL}/api/scan/execute`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -214,62 +216,170 @@ async function startScan() {
                 headers: headers,
                 param_name: paramName
             })
-        });
+        }).catch(e => console.error('Execute request error:', e));
 
-        const executeData = await executeResponse.json();
-
-        document.getElementById('progressFill').style.width = '100%';
-        document.getElementById('progressText').textContent = '扫描完成!';
-
-        if (executeData.code === 0) {
-            // 直接显示结果
-            displayResult(executeData.data);
-        } else {
-            // 执行失败，轮询进度
-            startPolling(currentTaskId);
-        }
+        // ===== Step 3: 开始轮询进度 =====
+        document.getElementById('progressText').textContent = '扫描启动中...';
+        startPolling(currentTaskId);
 
     } catch (error) {
-        alert('网络错误: ' + error.message);
-        document.getElementById('submitBtn').disabled = false;
-        document.getElementById('progressContainer').style.display = 'none';
+        showError('网络错误: ' + error.message);
     }
 }
 
-// HTTP Polling 进度（备用）
+// ===== 轮询进度 =====
 function startPolling(taskId) {
+    // 清除之前的轮询
+    if (pollTimer) {
+        clearInterval(pollTimer);
+    }
+
+    let pollCount = 0;
+    const maxPolls = 60;  // 最多 60 秒
+
     pollTimer = setInterval(async () => {
+        pollCount++;
+
+        if (pollCount > maxPolls) {
+            clearInterval(pollTimer);
+            showError('扫描超时（60秒），请重试或检查目标服务器');
+            return;
+        }
+
         try {
-            const res = await fetch(`${API_URL}/api/scan/progress?task_id=${taskId}`);
-            const data = await res.json();
+            const response = await fetch(`${API_URL}/api/scan/progress?task_id=${taskId}`);
+            const data = await response.json();
 
             if (data.code === 0) {
-                updateProgress(data.data);
+                updateProgressUI(data.data);
 
+                // 检查状态
                 if (data.data.status === 'completed') {
                     clearInterval(pollTimer);
                     document.getElementById('submitBtn').disabled = false;
                     loadResult(taskId);
                 } else if (data.data.status === 'failed') {
                     clearInterval(pollTimer);
-                    document.getElementById('progressText').textContent = '扫描失败';
-                    document.getElementById('submitBtn').disabled = false;
+                    showError(data.data.error || '扫描失败');
                 }
+            } else {
+                clearInterval(pollTimer);
+                showError(data.message || '查询进度失败');
             }
         } catch (e) {
             console.error('轮询错误:', e);
+            // 单次失败不中断，继续轮询
         }
-    }, 2000);
+    }, 1000); // 每 1 秒轮询
 }
 
-// 更新进度
-function updateProgress(data) {
-    document.getElementById('progressFill').style.width = data.progress + '%';
-    document.getElementById('progressText').textContent =
-        '检测中: ' + data.current_step + ' (' + data.progress + '%)';
+// ===== 更新进度 UI =====
+function updateProgressUI(data) {
+    const fill = document.getElementById('progressFill');
+    const text = document.getElementById('progressText');
+
+    // 更新进度条宽度
+    fill.style.width = data.progress + '%';
+
+    // 步骤图标映射
+    const stepIcons = {
+        '初始化': '⚙️',
+        '加载': '📚',
+        '规则': '📚',
+        '提示词注入检测': '💉',
+        '越狱攻击检测': '🔓',
+        '数据泄露检测': '📉',
+        '权限绕过检测': '🔓',
+        '隐私数据检测': '🔒',
+        '敏感内容检测': '⚠️',
+        '计算': '📊',
+        '保存': '💾',
+        '完成': '✅',
+        '扫描完成': '✅',
+        'waiting': '⏳'
+    };
+
+    // 获取图标
+    let icon = '🔍';
+    for (const key in stepIcons) {
+        if (data.current_step && data.current_step.includes(key)) {
+            icon = stepIcons[key];
+            break;
+        }
+    }
+
+    text.textContent = `${icon} ${data.current_step} (${data.progress}%)`;
+
+    // 进度条颜色变化
+    if (data.progress >= 100) {
+        fill.style.background = 'linear-gradient(90deg, #38a169 0%, #68d391 100%)';
+    } else if (data.progress >= 50) {
+        fill.style.background = 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)';
+    }
 }
 
-// 加载结果（备用）
+// ===== 显示错误 =====
+function showError(errorInfo) {
+    // 解析错误信息
+    let message = '未知错误';
+    let suggestion = '';
+
+    if (typeof errorInfo === 'string') {
+        message = errorInfo;
+    } else if (errorInfo.error) {
+        message = errorInfo.error;
+    }
+
+    // 根据错误类型给出建议
+    if (message.includes('Database')) {
+        suggestion = '数据库连接失败，请稍后重试';
+    } else if (message.includes('timeout') || message.includes('超时')) {
+        suggestion = '扫描超时，可能是目标服务器响应慢';
+    } else if (message.includes('connection') || message.includes('连接')) {
+        suggestion = '无法连接目标服务器，请检查 URL 是否正确';
+    } else {
+        suggestion = '请检查输入是否正确，或联系技术支持';
+    }
+
+    // 隐藏进度条
+    document.getElementById('progressContainer').style.display = 'none';
+
+    // 显示错误区域
+    let errorBox = document.getElementById('errorBox');
+    if (!errorBox) {
+        const container = document.querySelector('.container');
+        errorBox = document.createElement('div');
+        errorBox.id = 'errorBox';
+        errorBox.className = 'error-container';
+        errorBox.style.cssText = 'display:block; padding:30px; background:#fff5f5; border-radius:12px; margin-bottom:20px; border-left:4px solid #e53e3e;';
+        container.insertBefore(errorBox, document.getElementById('resultContainer'));
+    }
+
+    errorBox.style.display = 'block';
+    errorBox.innerHTML = `
+        <div style="text-align:center;">
+            <div style="font-size:48px; color:#e53e3e;">❌</div>
+            <h3 style="color:#e53e3e; margin-top:10px;">扫描失败</h3>
+            <p style="color:#666; margin-top:10px;"><strong>错误原因:</strong> ${escapeHtml(message)}</p>
+            <p style="color:#666; margin-top:5px;"><strong>建议:</strong> ${escapeHtml(suggestion)}</p>
+            <button class="btn" style="margin-top:20px;" onclick="retryScan()">重新扫描</button>
+        </div>
+    `;
+
+    // 启用按钮
+    document.getElementById('submitBtn').disabled = false;
+}
+
+// ===== 重新扫描 =====
+function retryScan() {
+    const errorBox = document.getElementById('errorBox');
+    if (errorBox) {
+        errorBox.style.display = 'none';
+    }
+    startScan();
+}
+
+// ===== 加载结果 =====
 async function loadResult(taskId) {
     try {
         const response = await fetch(`${API_URL}/api/scan/result?task_id=${taskId}`);
@@ -277,13 +387,15 @@ async function loadResult(taskId) {
 
         if (data.code === 0) {
             displayResult(data.data);
+        } else {
+            showError('加载结果失败: ' + data.message);
         }
     } catch (error) {
-        console.error('加载结果失败:', error);
+        showError('加载结果失败: ' + error.message);
     }
 }
 
-// 显示结果
+// ===== 显示结果 =====
 function displayResult(result) {
     document.getElementById('resultContainer').style.display = 'block';
     document.getElementById('progressContainer').style.display = 'none';
@@ -332,7 +444,7 @@ function displayResult(result) {
     downloadBtn.href = '#';
 }
 
-// 工具函数
+// ===== 工具函数 =====
 function escapeHtml(text) {
     if (typeof text !== 'string') return text;
     const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };

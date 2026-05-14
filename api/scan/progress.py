@@ -1,5 +1,5 @@
 """
-API 入口 - 获取扫描进度（查询参数方式）
+API 入口 - 查询扫描进度
 """
 
 from flask import Flask, request, jsonify
@@ -7,61 +7,85 @@ from flask_cors import CORS
 import sys
 import os
 
-app = Flask(__name__)
-CORS(app)
-
 # 添加 api 目录到 Python 路径
 api_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, api_dir)
 
+app = Flask(__name__)
+CORS(app)
+
 
 @app.route('/api/scan/progress', methods=['GET', 'OPTIONS'])
 def get_scan_progress():
-    """获取扫描进度"""
+    """
+    查询扫描进度
+
+    Query params:
+        task_id: 任务 ID
+
+    Response:
+        {
+            "code": 0,
+            "data": {
+                "task_id": "scan_xxx",
+                "status": "running",
+                "progress": 45,
+                "current_step": "提示词注入检测",
+                "score": null,
+                "level": null
+            }
+        }
+    """
     if request.method == 'OPTIONS':
         return jsonify({'code': 0}), 200
 
     task_id = request.args.get('task_id')
     if not task_id:
-        return jsonify({'code': 1, 'message': 'task_id parameter required'}), 400
+        return jsonify({'code': 1, 'message': 'task_id required'}), 400
 
     # 从数据库查询
-    try:
-        from lib.db import get_session, ScanTask
+    from lib.db import get_session, init_db, ScanTask, Vulnerability
 
-        db = get_session()
-        if db:
-            task = db.query(ScanTask).filter(ScanTask.id == task_id).first()
-            db.close()
+    init_db()
+    db = get_session()
 
-            if task:
-                return jsonify({
-                    'code': 0,
-                    'message': 'success',
-                    'data': {
-                        'task_id': task_id,
-                        'status': task.status or 'queued',
-                        'progress': task.progress or 0,
-                        'current_step': task.current_step or 'waiting',
-                        'step': 1,
-                        'score': task.score
-                    }
-                })
-    except Exception as e:
-        print(f"DB query error: {e}")
+    if not db:
+        return jsonify({'code': 1, 'message': 'Database connection failed'}), 500
 
-    # 降级处理：返回模拟数据
+    task = db.query(ScanTask).filter(ScanTask.id == task_id).first()
+
+    if not task:
+        db.close()
+        return jsonify({'code': 1, 'message': f'Task not found: {task_id}'}), 404
+
+    response_data = {
+        'task_id': task_id,
+        'status': task.status or 'queued',
+        'progress': task.progress or 0,
+        'current_step': task.current_step or 'waiting',
+    }
+
+    # 失败状态返回错误信息
+    if task.status == 'failed':
+        response_data['error'] = task.error_message or 'Unknown error'
+
+    # 完成状态返回结果
+    if task.status == 'completed':
+        response_data['score'] = task.score
+        response_data['level'] = task.level
+
+        # 统计漏洞数量
+        vuln_count = db.query(Vulnerability).filter(
+            Vulnerability.task_id == task_id
+        ).count()
+        response_data['vulnerabilities_count'] = vuln_count
+
+    db.close()
+
     return jsonify({
         'code': 0,
-        'message': 'success (fallback)',
-        'data': {
-            'task_id': task_id,
-            'status': 'completed',
-            'progress': 100,
-            'current_step': 'finished',
-            'step': 1,
-            'score': 85
-        }
+        'message': 'success',
+        'data': response_data
     })
 
 

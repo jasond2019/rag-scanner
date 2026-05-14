@@ -6,10 +6,36 @@
 // API 基础 URL - Vercel 后端地址
 const API_URL = 'https://rag-scanner.vercel.app';
 
+// 超时配置（Vercel Serverless 冷启动可能需要较长时间）
+const FETCH_TIMEOUT = 30000; // 30秒超时
+const POLL_INTERVAL = 2000;  // 2秒轮询间隔
+const MAX_POLL_TIME = 120000; // 最大轮询时间 120秒
+
 let currentTaskId = null;
 let parsedData = null;
 let debounceTimer = null;
 let pollTimer = null;
+
+// ===== 带超时的 fetch =====
+async function fetchWithTimeout(url, options = {}, timeout = FETCH_TIMEOUT) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+    try {
+        const response = await fetch(url, {
+            ...options,
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        return response;
+    } catch (error) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+            throw new Error('请求超时，Vercel 服务可能正在冷启动，请稍后重试');
+        }
+        throw error;
+    }
+}
 
 // 输入框变化时自动解析
 document.getElementById('inputBox').addEventListener('input', (e) => {
@@ -44,11 +70,11 @@ async function parseInput(input) {
         inputTypeBadge.className = 'input-type-badge curl';
 
         try {
-            const res = await fetch(`${API_URL}/api/scan/parse_curl`, {
+            const res = await fetchWithTimeout(`${API_URL}/api/scan/parse_curl`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ curl: input })
-            });
+            }, FETCH_TIMEOUT);
             const data = await res.json();
 
             if (data.code === 0) {
@@ -187,7 +213,7 @@ async function startScan() {
 
     try {
         // ===== Step 1: 提交任务 =====
-        const submitResponse = await fetch(`${API_URL}/api/scan/submit`, {
+        const submitResponse = await fetchWithTimeout(`${API_URL}/api/scan/submit`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -195,7 +221,7 @@ async function startScan() {
                 target_type: parsedData.inputType,
                 param_name: paramName
             })
-        });
+        }, FETCH_TIMEOUT);
 
         const submitData = await submitResponse.json();
 
@@ -207,7 +233,7 @@ async function startScan() {
         currentTaskId = submitData.data.task_id;
 
         // ===== Step 2: 启动扫描（不等待返回） =====
-        fetch(`${API_URL}/api/scan/execute`, {
+        fetchWithTimeout(`${API_URL}/api/scan/execute`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -216,7 +242,10 @@ async function startScan() {
                 headers: headers,
                 param_name: paramName
             })
-        }).catch(e => console.error('Execute request error:', e));
+        }, FETCH_TIMEOUT).catch(e => {
+            console.error('Execute request error:', e);
+            // 不中断流程，继续轮询
+        });
 
         // ===== Step 3: 开始轮询进度 =====
         document.getElementById('progressText').textContent = '扫描启动中...';
@@ -235,19 +264,19 @@ function startPolling(taskId) {
     }
 
     let pollCount = 0;
-    const maxPolls = 60;  // 最多 60 秒
+    const maxPolls = MAX_POLL_TIME / POLL_INTERVAL;  // 最大轮询次数
 
     pollTimer = setInterval(async () => {
         pollCount++;
 
         if (pollCount > maxPolls) {
             clearInterval(pollTimer);
-            showError('扫描超时（60秒），请重试或检查目标服务器');
+            showError('扫描超时（120秒），请重试或检查目标服务器');
             return;
         }
 
         try {
-            const response = await fetch(`${API_URL}/api/scan/progress?task_id=${taskId}`);
+            const response = await fetchWithTimeout(`${API_URL}/api/scan/progress?task_id=${taskId}`, {}, FETCH_TIMEOUT);
             const data = await response.json();
 
             if (data.code === 0) {
@@ -270,7 +299,7 @@ function startPolling(taskId) {
             console.error('轮询错误:', e);
             // 单次失败不中断，继续轮询
         }
-    }, 1000); // 每 1 秒轮询
+    }, POLL_INTERVAL); // 每 2 秒轮询
 }
 
 // ===== 更新进度 UI =====
@@ -382,7 +411,7 @@ function retryScan() {
 // ===== 加载结果 =====
 async function loadResult(taskId) {
     try {
-        const response = await fetch(`${API_URL}/api/scan/result?task_id=${taskId}`);
+        const response = await fetchWithTimeout(`${API_URL}/api/scan/result?task_id=${taskId}`, {}, FETCH_TIMEOUT);
         const data = await response.json();
 
         if (data.code === 0) {

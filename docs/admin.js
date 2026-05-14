@@ -1,6 +1,6 @@
 // RAG Scanner 管理后台 JavaScript
 
-const API_BASE = '/api';
+const API_BASE = 'https://rag-scanner.vercel.app/api';
 
 // 区域导航
 function showSection(section) {

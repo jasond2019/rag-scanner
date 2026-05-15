@@ -1,14 +1,12 @@
 """
 Vercel Postgres 数据库连接
 使用 psycopg (psycopg3) 纯 Python 驱动
-适配 Vercel Serverless 环境
 """
 
 import os
 from sqlalchemy import create_engine, Column, String, Integer, Text, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import NullPool  # Serverless 必须使用 NullPool
 from datetime import datetime
 
 # Neon 提供多种环境变量，优先使用 DATABASE_URL（推荐）
@@ -21,19 +19,21 @@ db_error = None
 if DATABASE_URL:
     try:
         # psycopg (psycopg3) 是 SQLAlchemy 2.0 推荐的纯 Python 驱动
+        # 支持 Vercel Serverless，无 channel_binding 兼容问题
         db_url = DATABASE_URL
         if db_url.startswith('postgresql://'):
             db_url = db_url.replace('postgresql://', 'postgresql+psycopg://', 1)
 
-        # Vercel Serverless 必须使用 NullPool（无连接池）
-        # 每次请求创建新连接，完成后立即关闭
+        # 禁用 channel_binding 避免 pg8000 兼容问题
         engine = create_engine(
             db_url,
-            poolclass=NullPool,  # 关键：无连接池
-            connect_args={'connect_timeout': 30}  # 增加超时
+            pool_pre_ping=True,
+            pool_size=1,
+            max_overflow=0,
+            connect_args={'connect_timeout': 10}
         )
         SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-        print(f"Database engine created successfully (NullPool)")
+        print(f"Database engine created successfully")
     except Exception as e:
         db_error = str(e)
         print(f"Database engine creation failed: {e}")

@@ -45,10 +45,6 @@ class ScanEngine:
             "data_leak": DataLeakDetector(),
         }
 
-    def get_detector(self, detector_key: str):
-        """获取单个检测器（带错误处理）"""
-        return self.detectors.get(detector_key)
-
     def scan(
         self,
         task_id: str,
@@ -58,7 +54,6 @@ class ScanEngine:
     ) -> ScanResult:
         """执行扫描"""
         all_vulnerabilities = []
-        failed_detectors = []
 
         # 设置请求格式
         for detector in self.detectors.values():
@@ -68,19 +63,13 @@ class ScanEngine:
                 "headers": headers,
             })
 
-        # 执行检测（单个失败不影响整体）
+        # 执行检测
         for detector_name, detector in self.detectors.items():
             try:
                 vulns = detector.detect(target_url, headers, task_id)
                 all_vulnerabilities.extend(vulns)
             except Exception as e:
                 print(f"[{detector_name}] Error: {e}")
-                failed_detectors.append(detector_name)
-                # 继续执行其他检测器
-
-        # 记录失败的检测器
-        if failed_detectors:
-            print(f"Warning: {len(failed_detectors)} detectors failed: {failed_detectors}")
 
         # 计算评分
         score_breakdown = self.scorer.calculate_breakdown(all_vulnerabilities)

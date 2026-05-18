@@ -295,3 +295,122 @@ h1 {
     margin-top: 8px;
     display: none;
 }
+
+/* History Section */
+.history-section {
+    margin-top: 30px;
+    padding-top: 30px;
+    border-top: 2px solid #f0f0f0;
+}
+
+.history-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    color: #333;
+    font-weight: 600;
+    font-size: 18px;
+}
+
+.refresh-btn-sm {
+    padding: 6px 12px;
+    background: #f0f0f0;
+    color: #333;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.refresh-btn-sm:hover {
+    background: #e0e0e0;
+}
+
+.history-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.history-item:hover {
+    background: #e8e9ea;
+}
+
+.history-info {
+    flex: 1;
+    overflow: hidden;
+}
+
+.history-target {
+    display: block;
+    color: #333;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.history-time {
+    display: block;
+    color: #999;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.history-result {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.history-score {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.history-status {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-completed { background: #c6f6d5; color: #276749; }
+.status-running { background: #bee3f8; color: #2b6cb0; }
+.status-queued { background: #fefcbf; color: #975a16; }
+.status-failed { background: #fed7d7; color: #c53030; }
+
+.empty-history {
+    text-align: center;
+    color: #999;
+    padding: 20px;
+    font-size: 14px;
+}
+
+.loading-text {
+    text-align: center;
+    color: #999;
+    padding: 20px;
+    font-size: 14px;
+}
+
+.error-text {
+    text-align: center;
+    color: #e53e3e;
+    padding: 20px;
+    font-size: 14px;
+}

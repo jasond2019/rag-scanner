@@ -332,7 +332,7 @@ def execute_scan():
         task.progress = 80
         db.commit()
 
-        from scorer import VulnerabilityScorer
+        from scanner.scorer import VulnerabilityScorer
         scorer = VulnerabilityScorer()
         score_breakdown = scorer.calculate_breakdown(all_vulnerabilities)
         final_score = score_breakdown["final_score"]

@@ -327,12 +327,16 @@ def execute_scan():
             task.progress = 20 + int((i + 1) * progress_per_detector)
             db.commit()
 
-        # 步骤 4: 计算评分
+        # 步骤 4: 计算评分（使用 VulnerabilityScorer 直接计算）
         task.current_step = '计算安全评分'
         task.progress = 80
         db.commit()
 
-        result = ScanEngine().scan(task_id, url, headers, param_name)
+        from scorer import VulnerabilityScorer
+        scorer = VulnerabilityScorer()
+        score_breakdown = scorer.calculate_breakdown(all_vulnerabilities)
+        final_score = score_breakdown["final_score"]
+        risk_level = scorer.get_risk_level(final_score)
 
         # 步骤 5: 保存漏洞
         task.current_step = '保存检测结果'
@@ -360,8 +364,8 @@ def execute_scan():
         task.status = 'completed'
         task.progress = 100
         task.current_step = '扫描完成'
-        task.score = result.score
-        task.level = result.level
+        task.score = final_score
+        task.level = risk_level
         task.completed_at = datetime.utcnow()
         db.commit()
         db.close()
@@ -371,10 +375,10 @@ def execute_scan():
             'message': 'success',
             'data': {
                 'task_id': task_id,
-                'score': result.score,
-                'level': result.level,
+                'score': final_score,
+                'level': risk_level,
                 'vulnerabilities': all_vulnerabilities,
-                'score_breakdown': result.score_breakdown,
+                'score_breakdown': score_breakdown,
             }
         })
 

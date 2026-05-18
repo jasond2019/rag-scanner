@@ -53,4 +53,11 @@ Repository = "https://github.com/ragshield/rag-scanner"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["app*", "scanner*"]
+include = ["app*", "scanner*", "lib*", "api*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"

@@ -157,7 +157,7 @@ docker-compose up -d
 ### Parse curl Command
 
 ```http
-POST /api/v1/scan/parse-curl
+POST /api/scan/parse_curl
 Content-Type: application/json
 
 {
@@ -179,7 +179,7 @@ Response:
 ### Submit Scan Task
 
 ```http
-POST /api/v1/scan/submit
+POST /api/scan/submit
 Content-Type: application/json
 
 {
@@ -197,10 +197,51 @@ Response:
 }
 ```
 
+### Get Scan Progress
+
+```http
+GET /api/scan/progress?task_id=xxx
+
+Response:
+{
+  "code": 0,
+  "data": {
+    "task_id": "scan_xxx",
+    "status": "running",
+    "progress": 45,
+    "current_step": "提示词注入检测"
+  }
+}
+```
+
+### Execute Scan
+
+```http
+POST /api/scan/execute
+Content-Type: application/json
+
+{
+  "task_id": "scan_xxx",
+  "url": "https://api.example.com",
+  "headers": {"Authorization": "Bearer xxx"},
+  "param_name": "query"
+}
+
+Response:
+{
+  "code": 0,
+  "data": {
+    "score": 85,
+    "level": "medium",
+    "vulnerabilities": [...]
+  }
+}
+```
+
 ### Get Scan Result
 
 ```http
-GET /api/v1/scan/{task_id}/result
+GET /api/scan/result?task_id=xxx
 
 Response:
 {

@@ -2,12 +2,6 @@
   "version": 2,
   "public": true,
   "rewrites": [
-    { "source": "/api/admin/stats", "destination": "/api/admin/main" },
-    { "source": "/api/admin/tasks", "destination": "/api/admin/main" },
-    { "source": "/api/admin/history", "destination": "/api/admin/main" },
-    { "source": "/api/admin/in_progress", "destination": "/api/admin/main" },
-    { "source": "/api/admin/logs", "destination": "/api/admin/detail" },
-    { "source": "/api/report/generate", "destination": "/api/report/download" },
     { "source": "/", "destination": "/docs/index.html" },
     { "source": "/app.js", "destination": "/docs/app.js" },
     { "source": "/pdf-report.js", "destination": "/docs/pdf-report.js" },

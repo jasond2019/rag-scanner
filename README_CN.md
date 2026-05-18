@@ -120,7 +120,7 @@ docker-compose up -d
 ### 解析 curl 命令
 
 ```http
-POST /api/v1/scan/parse-curl
+POST /api/scan/parse_curl
 Content-Type: application/json
 
 {
@@ -142,7 +142,7 @@ Response:
 ### 提交扫描任务
 
 ```http
-POST /api/v1/scan/submit
+POST /api/scan/submit
 Content-Type: application/json
 
 {
@@ -160,10 +160,51 @@ Response:
 }
 ```
 
+### 查询扫描进度
+
+```http
+GET /api/scan/progress?task_id=xxx
+
+Response:
+{
+  "code": 0,
+  "data": {
+    "task_id": "scan_xxx",
+    "status": "running",
+    "progress": 45,
+    "current_step": "提示词注入检测"
+  }
+}
+```
+
+### 执行扫描
+
+```http
+POST /api/scan/execute
+Content-Type: application/json
+
+{
+  "task_id": "scan_xxx",
+  "url": "https://api.example.com",
+  "headers": {"Authorization": "Bearer xxx"},
+  "param_name": "query"
+}
+
+Response:
+{
+  "code": 0,
+  "data": {
+    "score": 85,
+    "level": "medium",
+    "vulnerabilities": [...]
+  }
+}
+```
+
 ### 获取扫描结果
 
 ```http
-GET /api/v1/scan/{task_id}/result
+GET /api/scan/result?task_id=xxx
 
 Response:
 {

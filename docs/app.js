@@ -510,3 +510,93 @@ function getSeverityText(severity) {
     const map = { critical: '严重', high: '高危', medium: '中危', low: '低危' };
     return map[severity] || severity;
 }
+
+// ===== 用户历史记录 =====
+/**
+ * 加载当前用户的扫描历史记录
+ * - 从 localStorage 获取 user_id
+ * - 调用 /api/admin/history 接口
+ * - 显示在页面下方的历史记录区域
+ */
+async function loadMyHistory() {
+    const userId = getUserId();
+    const historyList = document.getElementById('historyList');
+
+    try {
+        const resp = await fetch(`${API_URL}/api/admin/history?user_id=${userId}`);
+        const data = await resp.json();
+
+        if (data.success && data.data.tasks.length > 0) {
+            const tasks = data.data.tasks;
+            historyList.innerHTML = tasks.map(task => `
+                <div class="history-item" onclick="viewHistoryTask('${task.id}')">
+                    <div class="history-info">
+                        <span class="history-target">${escapeHtml(task.target_value.substring(0, 60))}${task.target_value.length > 60 ? '...' : ''}</span>
+                        <span class="history-time">${formatHistoryTime(task.created_at)}</span>
+                    </div>
+                    <div class="history-result">
+                        <span class="history-score" style="color: ${getScoreColor(task.score || 100)}">${task.score || '--'}分</span>
+                        <span class="history-status status-${task.status}">${getStatusText(task.status)}</span>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            historyList.innerHTML = '<p class="empty-history">暂无扫描记录，开始您的第一次扫描吧！</p>';
+        }
+    } catch (e) {
+        historyList.innerHTML = `<p class="error-text">加载失败: ${e.message}</p>`;
+    }
+}
+
+/**
+ * 点击历史记录项查看详情
+ */
+async function viewHistoryTask(taskId) {
+    // 显示进度区域
+    document.getElementById('progressContainer').style.display = 'block';
+    document.getElementById('progressFill').style.width = '100%';
+    document.getElementById('progressText').textContent = '加载历史结果...';
+
+    try {
+        // 查询结果
+        const resp = await fetch(`${API_URL}/api/scan/result?task_id=${taskId}`);
+        const data = await resp.json();
+
+        if (data.code === 0) {
+            // 显示结果
+            displayResult(data.data);
+            currentTaskId = taskId;
+        } else {
+            showError('加载失败: ' + data.message);
+        }
+    } catch (e) {
+        showError('网络错误: ' + e.message);
+    }
+}
+
+/**
+ * 格式化历史记录时间
+ */
+function formatHistoryTime(isoStr) {
+    if (!isoStr) return '';
+    try {
+        const d = new Date(isoStr);
+        return d.toLocaleDateString('zh-CN') + ' ' + d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+    } catch {
+        return isoStr;
+    }
+}
+
+/**
+ * 获取状态文本
+ */
+function getStatusText(status) {
+    const map = { completed: '已完成', running: '进行中', queued: '排队中', failed: '失败' };
+    return map[status] || status;
+}
+
+// ===== 页面初始化 =====
+// 页面加载完成后加载历史记录
+document.addEventListener('DOMContentLoaded', () => {
+    loadMyHistory();
+});

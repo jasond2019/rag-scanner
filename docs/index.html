@@ -87,6 +87,17 @@
             <button class="download-btn" id="downloadBtn">下载 PDF 报告</button>
         </div>
 
+        <!-- 用户历史记录区域 -->
+        <div class="history-section" id="historySection">
+            <h3 class="history-title">
+                <span>📋 我的扫描记录</span>
+                <button class="refresh-btn-sm" onclick="loadMyHistory()">刷新</button>
+            </h3>
+            <div class="history-list" id="historyList">
+                <p class="loading-text">加载历史记录...</p>
+            </div>
+        </div>
+
         <!-- 功能展示 -->
         <div class="features">
             <h3>10 项安全检测</h3>

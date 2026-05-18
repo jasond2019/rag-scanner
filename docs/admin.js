@@ -67,7 +67,7 @@ const pageSize = 20;
 async function loadTasks(page = 0) {
     currentPage = page;
     const tbody = document.getElementById('tasksBody');
-    tbody.innerHTML = '<tr><td colspan="7" class="loading">加载中...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="loading">加载中...</td></tr>';
 
     try {
         const resp = await fetch(`${API_BASE}/admin/tasks?limit=${pageSize}&offset=${page * pageSize}`);
@@ -77,6 +77,7 @@ async function loadTasks(page = 0) {
             tbody.innerHTML = data.data.tasks.map(task => `
                 <tr>
                     <td>${task.id}</td>
+                    <td><span class="user-id-cell" title="${task.user_id || 'anonymous'}">${truncate(task.user_id || 'anonymous', 20)}</span></td>
                     <td>${truncate(task.target_value, 50)}</td>
                     <td><span class="status-badge status-${task.status}">${getStatusText(task.status)}</span></td>
                     <td>${task.score || '--'}</td>
@@ -89,10 +90,10 @@ async function loadTasks(page = 0) {
             // 分页
             renderPagination(data.data.total, page);
         } else {
-            tbody.innerHTML = `<tr><td colspan="7" class="loading">错误: ${data.error}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="8" class="loading">错误: ${data.error}</td></tr>`;
         }
     } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="7" class="loading">错误: ${e.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="loading">错误: ${e.message}</td></tr>`;
     }
 }
 
@@ -290,7 +291,7 @@ async function filterByUser() {
     }
 
     const tbody = document.getElementById('tasksBody');
-    tbody.innerHTML = '<tr><td colspan="7" class="loading">查询中...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="loading">查询中...</td></tr>';
 
     try {
         const resp = await fetch(`${API_BASE}/admin/history?user_id=${encodeURIComponent(userId)}`);
@@ -299,11 +300,12 @@ async function filterByUser() {
         if (data.success) {
             const tasks = data.data.tasks;
             if (tasks.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="loading">该用户暂无扫描记录</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="loading">该用户暂无扫描记录</td></tr>';
             } else {
                 tbody.innerHTML = tasks.map(task => `
                     <tr>
                         <td>${task.id}</td>
+                        <td><span class="user-id-cell" title="${userId}">${truncate(userId, 20)}</span></td>
                         <td>${truncate(task.target_value, 50)}</td>
                         <td><span class="status-badge status-${task.status}">${getStatusText(task.status)}</span></td>
                         <td>${task.score || '--'}</td>
@@ -316,10 +318,10 @@ async function filterByUser() {
             // 清除分页（用户过滤不分页）
             document.getElementById('tasksPagination').innerHTML = '';
         } else {
-            tbody.innerHTML = `<tr><td colspan="7" class="loading">错误: ${data.error}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="8" class="loading">错误: ${data.error}</td></tr>`;
         }
     } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="7" class="loading">错误: ${e.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="loading">错误: ${e.message}</td></tr>`;
     }
 }
 

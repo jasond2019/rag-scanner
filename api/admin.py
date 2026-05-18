@@ -107,6 +107,7 @@ def get_tasks():
 
         task_list = [{
             'id': task.id,
+            'user_id': task.user_id or 'anonymous',
             'target_type': task.target_type,
             'target_value': task.target_value,
             'status': task.status,

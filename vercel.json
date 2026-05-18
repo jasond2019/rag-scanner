@@ -2,6 +2,10 @@
   "version": 2,
   "public": true,
   "rewrites": [
+    { "source": "/api/hello", "destination": "/api/scan" },
+    { "source": "/api/scan/:path*", "destination": "/api/scan" },
+    { "source": "/api/admin/:path*", "destination": "/api/admin" },
+    { "source": "/api/report/:path*", "destination": "/api/report" },
     { "source": "/", "destination": "/docs/index.html" },
     { "source": "/app.js", "destination": "/docs/app.js" },
     { "source": "/pdf-report.js", "destination": "/docs/pdf-report.js" },

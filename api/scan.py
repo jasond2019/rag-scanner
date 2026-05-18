@@ -446,8 +446,8 @@ def get_scan_result():
                     'evidence': evidence_data,
                 })
 
-            score = task.score or 100
-            level = task.level or 'low'
+            score = task.score if task.score is not None else 100
+            level = task.level if task.level is not None else 'low'
 
             db.close()
 

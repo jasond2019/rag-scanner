@@ -276,3 +276,70 @@ function getLevelText(level) {
 document.addEventListener('DOMContentLoaded', () => {
     loadStats();
 });
+
+// ==================== 用户过滤功能 ====================
+
+/**
+ * 按输入的用户 ID 过滤任务
+ */
+async function filterByUser() {
+    const userId = document.getElementById('userFilterInput').value.trim();
+    if (!userId) {
+        alert('请输入用户 ID');
+        return;
+    }
+
+    const tbody = document.getElementById('tasksBody');
+    tbody.innerHTML = '<tr><td colspan="7" class="loading">查询中...</td></tr>';
+
+    try {
+        const resp = await fetch(`${API_BASE}/admin/history?user_id=${encodeURIComponent(userId)}`);
+        const data = await resp.json();
+
+        if (data.success) {
+            const tasks = data.data.tasks;
+            if (tasks.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="loading">该用户暂无扫描记录</td></tr>';
+            } else {
+                tbody.innerHTML = tasks.map(task => `
+                    <tr>
+                        <td>${task.id}</td>
+                        <td>${truncate(task.target_value, 50)}</td>
+                        <td><span class="status-badge status-${task.status}">${getStatusText(task.status)}</span></td>
+                        <td>${task.score || '--'}</td>
+                        <td>${task.level ? `<span class="level-badge level-${task.level}">${getLevelText(task.level)}</span>` : '--'}</td>
+                        <td>${formatTime(task.created_at)}</td>
+                        <td><button class="refresh-btn" onclick="showDetail('${task.id}')">查看</button></td>
+                    </tr>
+                `).join('');
+            }
+            // 清除分页（用户过滤不分页）
+            document.getElementById('tasksPagination').innerHTML = '';
+        } else {
+            tbody.innerHTML = `<tr><td colspan="7" class="loading">错误: ${data.error}</td></tr>`;
+        }
+    } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="7" class="loading">错误: ${e.message}</td></tr>`;
+    }
+}
+
+/**
+ * 查看当前用户的扫描历史
+ * - 从 localStorage 获取当前用户 ID（与 app.js 共享）
+ * - 调用 history 接口获取该用户的所有扫描记录
+ */
+async function showMyHistory() {
+    // 从 localStorage 获取用户 ID（与 app.js 共享）
+    let userId = localStorage.getItem('rag_user_id');
+
+    if (!userId) {
+        alert('您还没有进行过扫描，暂无历史记录。\n\n请先在主页进行一次扫描，系统会自动生成用户 ID。');
+        return;
+    }
+
+    // 显示用户 ID
+    document.getElementById('userFilterInput').value = userId;
+
+    // 查询历史
+    await filterByUser();
+}

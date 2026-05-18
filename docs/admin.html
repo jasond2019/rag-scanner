@@ -201,6 +201,22 @@
 
         <!-- 任务列表区域 -->
         <div id="tasks-section" style="display:none;">
+            <!-- 用户过滤区域 -->
+            <div class="filter-bar" style="margin-bottom: 15px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <label style="font-weight: 500; color: #333;">用户过滤:</label>
+                <input type="text" id="userFilterInput"
+                       placeholder="输入用户 ID"
+                       style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; width: 250px; font-size: 14px;">
+                <button onclick="filterByUser()" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">
+                    过滤
+                </button>
+                <button onclick="showMyHistory()" style="padding: 8px 16px; background: #48bb78; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">
+                    查看我的记录
+                </button>
+                <button onclick="loadTasks()" style="padding: 8px 16px; background: #f0f0f0; color: #333; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">
+                    全部任务
+                </button>
+            </div>
             <button class="refresh-btn" onclick="loadTasks()">刷新</button>
             <table class="task-table">
                 <thead>

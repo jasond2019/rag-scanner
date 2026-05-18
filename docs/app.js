@@ -16,6 +16,23 @@ let parsedData = null;
 let debounceTimer = null;
 let pollTimer = null;
 
+// ===== 用户 ID 管理 =====
+/**
+ * 获取或创建用户 ID
+ * - 首次访问时生成，存储在 localStorage
+ * - 格式: user_时间戳_随机字符串
+ * - 同一设备、同一浏览器持久保存
+ */
+function getUserId() {
+    let userId = localStorage.getItem('rag_user_id');
+    if (!userId) {
+        userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('rag_user_id', userId);
+        console.log('[RAG Scanner] Created new user ID:', userId);
+    }
+    return userId;
+}
+
 // ===== 带超时的 fetch =====
 async function fetchWithTimeout(url, options = {}, timeout = FETCH_TIMEOUT) {
     const controller = new AbortController();
@@ -213,13 +230,16 @@ async function startScan() {
 
     try {
         // ===== Step 1: 提交任务 =====
+        const userId = getUserId();  // 获取用户 ID
+
         const submitResponse = await fetchWithTimeout(`${API_URL}/api/scan/submit`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 target_value: parsedData.rawInput,
                 target_type: parsedData.inputType,
-                param_name: paramName
+                param_name: paramName,
+                user_id: userId  // 发送用户 ID
             })
         }, FETCH_TIMEOUT);
 

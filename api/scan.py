@@ -140,6 +140,7 @@ def submit_scan():
 
     target_value = data.get('target_value') or data.get('url') or data.get('curl') or ''
     param_name = data.get('param_name', 'query')
+    user_id = data.get('user_id') or request.headers.get('X-User-ID') or 'anonymous'  # 获取用户 ID
 
     if not target_value:
         return jsonify({'code': 1, 'message': 'Target URL required'}), 400
@@ -170,7 +171,8 @@ def submit_scan():
                 target_value=target_value,
                 status='queued',
                 progress=0,
-                current_step='waiting'
+                current_step='waiting',
+                user_id=user_id  # 保存用户 ID
             )
             db.add(task)
             db.commit()

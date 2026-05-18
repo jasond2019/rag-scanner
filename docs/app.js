@@ -535,7 +535,7 @@ async function loadMyHistory() {
                         <span class="history-time">${formatHistoryTime(task.created_at)}</span>
                     </div>
                     <div class="history-result">
-                        <span class="history-score" style="color: ${getScoreColor(task.score || 100)}">${task.score || '--'}分</span>
+                        <span class="history-score" style="color: ${getScoreColor(task.score ?? 100)}">${task.score ?? '--'}分</span>
                         <span class="history-status status-${task.status}">${getStatusText(task.status)}</span>
                     </div>
                 </div>

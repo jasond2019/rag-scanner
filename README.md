@@ -254,19 +254,79 @@ Response:
 }
 ```
 
+### Admin API
+
+```http
+GET /api/admin/stats
+
+Response:
+{
+  "success": true,
+  "data": {
+    "total_tasks": 100,
+    "completed_tasks": 80,
+    "in_progress_tasks": 5,
+    "failed_tasks": 15,
+    "avg_score": 75.5,
+    "risk_distribution": {"high": 20, "medium": 30, "low": 50}
+  }
+}
+```
+
+```http
+GET /api/admin/tasks?limit=20&offset=0
+
+Response:
+{
+  "success": true,
+  "data": {
+    "tasks": [...],
+    "total": 100
+  }
+}
+```
+
+```http
+GET /api/admin/history?user_id=xxx
+
+Response:
+{
+  "success": true,
+  "data": {
+    "tasks": [...],
+    "total": 10
+  }
+}
+```
+
+```http
+GET /api/admin/detail?task_id=xxx
+
+Response:
+{
+  "success": true,
+  "data": {
+    "task": {...},
+    "vulnerabilities": [...],
+    "total_vulnerabilities": 5
+  }
+}
+```
+
 ## Security Scoring Algorithm
 
 ```
 Base Score: 100 points
 Deduction Rules:
-- High-risk vulnerability: -15 points each
-- Medium-risk vulnerability: -10 points each
-- Low-risk vulnerability: -5 points each
+- Critical vulnerability: -15 points each
+- High vulnerability: -10 points each
+- Medium vulnerability: -5 points each
+- Low vulnerability: -2 points each
 
 Risk Levels:
-- High Risk: 0-59 points
-- Medium Risk: 60-79 points
-- Low Risk: 80-100 points
+- High Risk: 0-69 points
+- Medium Risk: 70-89 points
+- Low Risk: 90-100 points
 ```
 
 ## Update Rules Library

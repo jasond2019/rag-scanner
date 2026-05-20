@@ -43,13 +43,13 @@ class TestConfigCheckDetector:
         }
         vulns = await self.detector.detect_config(config)
         assert len(vulns) > 0
-        assert any(v["type"] == "config_error" for v in vulns)
-    
+        assert any(v["rule_id"] == "RAG-SEC-010" for v in vulns)
+
     @pytest.mark.asyncio
     async def test_detect_hardcoded_key(self):
         """测试硬编码密钥检测"""
         config = {
-            "api_key": "sk-1234567890abcdef1234567890abcdef"
+            "api_key": "abcdefghijklmnopqrst"  # 20 chars, pure alphanumeric
         }
         vulns = await self.detector.detect_config(config)
         assert len(vulns) > 0

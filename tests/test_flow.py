@@ -261,35 +261,25 @@ class TestDetectorFlow:
         """测试检测器初始化流程"""
         from scanner.detectors import (
             PromptInjectionDetector,
-            ModelJailbreakDetector,
+            JailbreakDetector,
             DataLeakDetector,
         )
-        from scanner.rate_limiter import RateLimiter
-        from scanner.auditor import ScanAuditor
 
-        # 创建依赖对象
-        rate_limiter = RateLimiter()
-        auditor = ScanAuditor()
+        # 简化版检测器不需要依赖对象
+        injection_detector = PromptInjectionDetector()
+        jailbreak_detector = JailbreakDetector()
+        data_leak_detector = DataLeakDetector()
 
-        # 初始化检测器
-        injection_detector = PromptInjectionDetector(rate_limiter, auditor)
-        jailbreak_detector = ModelJailbreakDetector(rate_limiter, auditor)
-        data_leak_detector = DataLeakDetector(rate_limiter, auditor)
-
-        # 验证属性（根据实际实现）
+        # 验证属性
         assert injection_detector.SEVERITY == "critical"
-        assert jailbreak_detector.SEVERITY == "high"  # ModelJailbreak 是 high
+        assert jailbreak_detector.SEVERITY == "critical"
         assert data_leak_detector.SEVERITY == "critical"
 
     def test_request_format_setting(self):
         """测试请求格式设置流程"""
         from scanner.detectors import PromptInjectionDetector
-        from scanner.rate_limiter import RateLimiter
-        from scanner.auditor import ScanAuditor
 
-        rate_limiter = RateLimiter()
-        auditor = ScanAuditor()
-        detector = PromptInjectionDetector(rate_limiter, auditor)
+        detector = PromptInjectionDetector()
 
         # 设置请求格式
         format_config = {

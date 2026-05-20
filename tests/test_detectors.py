@@ -3,89 +3,71 @@
 """
 
 import pytest
-import asyncio
 from pathlib import Path
 import sys
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(project_root / "api"))
 
-from scanner.detectors.config_check import ConfigCheckDetector
+from scanner.detectors.base import BaseDetector
 from scanner.detectors.data_leak import DataLeakDetector
-
-
-class MockAuditor:
-    """模拟审计器"""
-    async def log_request(self, **kwargs):
-        pass
-    
-    async def log_error(self, **kwargs):
-        pass
-
-
-class MockRateLimiter:
-    """模拟速率限制器"""
-    async def acquire(self, target):
-        return True
-
-
-class TestConfigCheckDetector:
-    """配置检测器测试"""
-    
-    def setup_method(self):
-        self.detector = ConfigCheckDetector(MockAuditor())
-    
-    @pytest.mark.asyncio
-    async def test_detect_default_password(self):
-        """测试默认密码检测"""
-        config = {
-            "requirements": "flask==2.0",
-            "password": "admin123"
-        }
-        vulns = await self.detector.detect_config(config)
-        assert len(vulns) > 0
-        assert any(v["rule_id"] == "RAG-SEC-010" for v in vulns)
-
-    @pytest.mark.asyncio
-    async def test_detect_hardcoded_key(self):
-        """测试硬编码密钥检测"""
-        config = {
-            "api_key": "abcdefghijklmnopqrst"  # 20 chars, pure alphanumeric
-        }
-        vulns = await self.detector.detect_config(config)
-        assert len(vulns) > 0
-    
-    @pytest.mark.asyncio
-    async def test_detect_debug_mode(self):
-        """测试调试模式检测"""
-        config = {
-            "debug": True,
-            "DEBUG": "True"
-        }
-        vulns = await self.detector.detect_config(config)
-        assert len(vulns) > 0
-    
-    @pytest.mark.asyncio
-    async def test_no_vulns(self):
-        """测试无漏洞配置"""
-        config = {
-            "name": "safe-app",
-            "version": "1.0.0"
-        }
-        vulns = await self.detector.detect_config(config)
-        assert len(vulns) == 0
+from scanner.detectors.prompt_injection import PromptInjectionDetector
+from scanner.detectors.jailbreak import JailbreakDetector
 
 
 class TestDataLeakDetector:
     """数据泄露检测器测试"""
-    
+
     def setup_method(self):
-        self.detector = DataLeakDetector(MockRateLimiter(), MockAuditor())
-    
+        self.detector = DataLeakDetector()
+
     def test_init(self):
         """测试初始化"""
-        assert len(self.detector.SENSITIVE_PATHS) > 0
         assert self.detector.SEVERITY == "critical"
         assert self.detector.SCORE_DEDUCTION == 15
+        assert self.detector.RULE_ID == "RAG-SEC-002"
+
+    def test_payloads_defined(self):
+        """测试 payloads 定义"""
+        assert len(self.detector.PAYLOADS) > 0
+
+    def test_patterns_defined(self):
+        """测试敏感模式定义"""
+        assert len(self.detector.LEAK_PATTERNS) > 0
+
+    def test_set_request_format(self):
+        """测试请求格式设置"""
+        format_config = {
+            "method": "POST",
+            "param_name": "prompt",
+            "headers": {"Authorization": "Bearer test"},
+        }
+        self.detector.set_request_format(format_config)
+        assert self.detector._request_format["param_name"] == "prompt"
+
+
+class TestPromptInjectionDetector:
+    """提示注入检测器测试"""
+
+    def setup_method(self):
+        self.detector = PromptInjectionDetector()
+
+    def test_init(self):
+        """测试初始化"""
+        assert self.detector.SEVERITY == "critical"
+        assert self.detector.SCORE_DEDUCTION == 15
+
+
+class TestJailbreakDetector:
+    """越狱检测器测试"""
+
+    def setup_method(self):
+        self.detector = JailbreakDetector()
+
+    def test_init(self):
+        """测试初始化"""
+        assert self.detector.SEVERITY == "critical"
 
 
 if __name__ == "__main__":

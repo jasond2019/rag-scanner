@@ -60,3 +60,22 @@ class VulnerabilityScorer:
             if min_score <= score <= max_score:
                 return level
         return "high"
+
+    def get_risk_color(self, score: int) -> str:
+        """根据分数获取风险颜色"""
+        level = self.get_risk_level(score)
+        colors = {"high": "red", "medium": "yellow", "low": "green"}
+        return colors.get(level, "red")
+
+    def generate_summary(self, breakdown: Dict) -> str:
+        """生成评分总结"""
+        final_score = breakdown.get("final_score", 100)
+        risk_level = self.get_risk_level(final_score)
+
+        risk_names = {"high": "高风险", "medium": "中等风险", "low": "低风险"}
+
+        critical = breakdown.get("critical_count", 0)
+        high = breakdown.get("high_count", 0)
+        medium = breakdown.get("medium_count", 0)
+
+        return f"安全评分 {final_score} 分，风险等级：{risk_names[risk_level]}，发现 {critical + high + medium} 个漏洞"

@@ -414,3 +414,54 @@ h1 {
     padding: 20px;
     font-size: 14px;
 }
+
+/* 配置管理区域 */
+.config-section {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.config-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.config-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #333;
+}
+
+.config-checkbox input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.config-clear-btn {
+    padding: 6px 12px;
+    background: #e0e0e0;
+    color: #666;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.config-clear-btn:hover {
+    background: #d0d0d0;
+}
+
+.config-hint {
+    color: #999;
+    font-size: 12px;
+    margin-top: 8px;
+}

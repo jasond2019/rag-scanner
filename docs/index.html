@@ -64,6 +64,22 @@
             </div>
         </div>
 
+        <!-- 配置管理区域 -->
+        <div class="config-section">
+            <div class="config-row">
+                <label class="config-checkbox">
+                    <input type="checkbox" id="rememberParam" checked>
+                    <span>记住参数名</span>
+                </label>
+                <label class="config-checkbox">
+                    <input type="checkbox" id="rememberAuth">
+                    <span>记住认证 Token</span>
+                </label>
+                <button class="config-clear-btn" onclick="clearConfig()">清除配置</button>
+            </div>
+            <p class="config-hint">配置将保存在本地浏览器，下次打开自动恢复</p>
+        </div>
+
         <!-- 扫描按钮 -->
         <button class="btn" id="submitBtn" onclick="startScan()">开始安全扫描</button>
 

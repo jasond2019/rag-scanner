@@ -33,6 +33,106 @@ function getUserId() {
     return userId;
 }
 
+// ===== 配置管理 =====
+const DEFAULT_CONFIG = {
+    paramName: 'query',
+    authToken: '',
+    rememberAuth: false,
+    rememberParam: true,
+    lastScanTime: null
+};
+
+/**
+ * 保存配置到 localStorage
+ */
+function saveConfig(config) {
+    const saveData = {
+        paramName: config.rememberParam ? config.paramName : DEFAULT_CONFIG.paramName,
+        authToken: config.rememberAuth ? config.authToken : '',
+        rememberAuth: config.rememberAuth,
+        rememberParam: config.rememberParam,
+        lastScanTime: new Date().toISOString()
+    };
+    localStorage.setItem('rag_scan_config', JSON.stringify(saveData));
+}
+
+/**
+ * 加载配置
+ */
+function loadConfig() {
+    const saved = localStorage.getItem('rag_scan_config');
+    if (saved) {
+        try {
+            return JSON.parse(saved);
+        } catch (e) {
+            return DEFAULT_CONFIG;
+        }
+    }
+    return DEFAULT_CONFIG;
+}
+
+/**
+ * 应用配置到 UI
+ */
+function applyConfig() {
+    const config = loadConfig();
+
+    // 应用参数名
+    if (config.rememberParam && config.paramName) {
+        const paramSelect = document.getElementById('paramSelect');
+        const customParam = document.getElementById('customParam');
+
+        const presetOptions = ['query', 'prompt', 'message', 'input', 'question'];
+        if (presetOptions.includes(config.paramName)) {
+            paramSelect.value = config.paramName;
+            customParam.style.display = 'none';
+        } else {
+            paramSelect.value = 'custom';
+            customParam.value = config.paramName;
+            customParam.style.display = 'inline';
+        }
+    }
+
+    // 应用认证 token
+    if (config.rememberAuth && config.authToken) {
+        document.getElementById('authToken').value = config.authToken;
+    }
+
+    // 应用复选框状态
+    const rememberParamEl = document.getElementById('rememberParam');
+    const rememberAuthEl = document.getElementById('rememberAuth');
+    if (rememberParamEl) rememberParamEl.checked = config.rememberParam;
+    if (rememberAuthEl) rememberAuthEl.checked = config.rememberAuth;
+}
+
+/**
+ * 清除配置
+ */
+function clearConfig() {
+    localStorage.removeItem('rag_scan_config');
+
+    // 重置 UI
+    const paramSelect = document.getElementById('paramSelect');
+    if (paramSelect) paramSelect.value = 'query';
+
+    const customParam = document.getElementById('customParam');
+    if (customParam) {
+        customParam.value = '';
+        customParam.style.display = 'none';
+    }
+
+    const authToken = document.getElementById('authToken');
+    if (authToken) authToken.value = '';
+
+    const rememberAuth = document.getElementById('rememberAuth');
+    if (rememberAuth) rememberAuth.checked = false;
+
+    const rememberParam = document.getElementById('rememberParam');
+    if (rememberParam) rememberParam.checked = true;
+
+    alert('配置已清除');
+}
+
 // ===== 带超时的 fetch =====
 async function fetchWithTimeout(url, options = {}, timeout = FETCH_TIMEOUT) {
     const controller = new AbortController();
@@ -208,12 +308,22 @@ async function startScan() {
 
     // 获取认证 token
     let headers = parsedData.headers || {};
+    let authToken = '';
     if (parsedData.inputType === 'url') {
-        const authToken = document.getElementById('authToken').value.trim();
+        authToken = document.getElementById('authToken').value.trim();
         if (authToken) {
             headers['Authorization'] = authToken.startsWith('Bearer ') ? authToken : `Bearer ${authToken}`;
         }
     }
+
+    // 保存配置（扫描前）
+    const config = {
+        paramName: paramName,
+        authToken: authToken,
+        rememberAuth: document.getElementById('rememberAuth')?.checked || false,
+        rememberParam: document.getElementById('rememberParam')?.checked || true
+    };
+    saveConfig(config);
 
     // 重置 UI
     document.getElementById('submitBtn').disabled = true;
@@ -596,7 +706,8 @@ function getStatusText(status) {
 }
 
 // ===== 页面初始化 =====
-// 页面加载完成后加载历史记录
+// 页面加载完成后应用配置并加载历史记录
 document.addEventListener('DOMContentLoaded', () => {
+    applyConfig();
     loadMyHistory();
 });
